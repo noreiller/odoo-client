@@ -1,0 +1,8 @@
+export const CALL = '/web/dataset/call_kw'
+export const LIST = '/web/dataset/search_read'
+export const BUTTON = '/web/dataset/call_button'
+export const LOGIN = '/web/session/authenticate'
+export const LOGOUT = '/web/session/destroy'
+export const REPORT = '/web/report'
+export const ACTION_LOAD = '/web/action/load'
+export const IMAGE = '/web/binary/image'
