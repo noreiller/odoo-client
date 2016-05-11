@@ -5,18 +5,22 @@
   "private": true,
   "author": "Aurélien MANCA (https://www.amanca.fr/)",
   "license": "MIT",
-  "main": "modules/client.js",
+  "main": "modules/index.js",
   "dependencies": {
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
     "babel-cli": "^6.8.0",
     "babel-core": "^6.8.0",
+    "babel-plugin-add-module-exports": "^0.2.0",
     "babel-preset-es2015-node6": "^0.2.0",
+    "babel-preset-stage-1": "^6.5.0",
     "expect": "^1.20.1",
-    "istanbul": "^1.0.0-alpha.2"
+    "istanbul": "^1.0.0-alpha.2",
+    "nodemon": "^1.9.2"
   },
   "scripts": {
-    "test": "babel-node ./node_modules/istanbul/lib/cli.js cover _mocha -- ./test"
+    "test": "babel-node ./node_modules/istanbul/lib/cli.js cover _mocha -- ./test",
+    "watch": "nodemon -x 'npm test' ./modules ./test"
   }
 }
