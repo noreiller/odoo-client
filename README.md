@@ -10,7 +10,7 @@ It authenticates the user when a request is performed without being authenticate
 import { createClient } from 'odoo-client'
 
 const client = createClient({
-  location: 'https://my-odoo.tld',
+  location: 'https://www.odoo.tld',
   db: 'mydb',
   login: 'login',
   autologin: false,
@@ -29,7 +29,10 @@ client.login({
 ````
 
 
-Run the tests
+## Tests
+
+First, you must create a **.env** file based on the **.env.sample** and fill it with your Odoo test server.
+Then, you can run the tests with the following command:
 
 ````
 $ npm test
