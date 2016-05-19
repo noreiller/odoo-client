@@ -1,7 +1,8 @@
 import fetch from 'isomorphic-fetch'
-import * as URLS from './urls'
+import * as ERRORS from './errors'
 import * as OPERATORS from './operators'
-import { formatUrl } from './utils'
+import * as URLS from './urls'
+import { formatUrl, processError, warning } from './utils'
 
 let _counter = 0
 const _queue = []
@@ -31,6 +32,16 @@ export default class OdooClient {
   }
 
   _saveSession() {
+    warning(
+      this.session.password,
+      `You provided a "password", use with caution in the browser since it can be exposed. Prefer use it only on the server.`
+    )
+
+    warning(
+      this.session.autologin && !this.session.password,
+      `"autologin" is enabled but you didn't provide a "password", so any autologin request will fail.`
+    )
+
     if (!this.session.autologin) {
       this.session.password = _defaultSession.password
     }
@@ -40,7 +51,35 @@ export default class OdooClient {
     }
   }
 
-  _sendRequest(type, params = {}, options = {}) {
+  _request(...args) {
+    return this._performRequest.apply(this, args)
+
+    // @TODO
+    // create promise to catch a request
+    // IF: no login request + no sid + autologin + password => login
+    // ELSE: _performRequest()
+
+    // IF: autologin request + reject => reject
+    // IF: reject session + autologin => login
+    // ELSE: resolve
+
+    // return new Promise((resolve, reject) => {
+    //   const callback = () => {
+    //     this._performRequest.apply(this, args)
+    //       .then(resolve)
+    //       .catch(reject)
+    //   }
+    //
+    //   if (args[0] !== 'login' && !this.session.sid && this.session.autologin && this.session.password) {
+    //     this.login().then(callback).catch(reject)
+    //   }
+    //   else {
+    //     callback.apply(this)
+    //   }
+    // })
+  }
+
+  _performRequest(type, params = {}, options = {}) {
     return new Promise((resolve, reject) => {
       if (this.session.sid) {
         params.session_id = this.session.sid
@@ -48,31 +87,26 @@ export default class OdooClient {
 
       // If this request has already been performed, cancel it.
       if (_queue.indexOf(JSON.stringify(params)) !== -1) {
-        reject('PendingRequest')
+        reject(new Error(ERRORS.PENDING_REQUEST))
       }
       // Or add it to the queue.
       else {
         _queue.push(JSON.stringify(params))
       }
 
-      const data = {
-        jsonrpc: '2.0',
-        method: 'call',
-        params: params,
-        id: (`r${++this.counter}`),
+      const onComplete = () => {
+        _queue.splice(_queue.indexOf(JSON.stringify(params)), 1)
       }
 
       const onSuccess = (body) => {
-        _queue.splice(_queue.indexOf(JSON.stringify(params)), 1)
+        onComplete()
 
         // Handle error
         if (body.error) {
-          if (body.error.data.debug.indexOf('SessionExpiredException') !== -1) {
-            reject('SessionExpiredException')
-          }
-          else {
-            reject(body.error.data.fault_code)
-          }
+          return reject(processError(body.error.data))
+        }
+        else if (body.result && body.result.uid === false) {
+          return reject(new Error(ERRORS.LOGIN_FAILED))
         }
 
         // User infos
@@ -129,18 +163,30 @@ export default class OdooClient {
           response.offset = params.offset
         }
 
-        resolve(response)
+        return resolve(response)
       }
 
       const onError = (err) => {
-        _queue.splice(_queue.indexOf(JSON.stringify(params)), 1)
+        onComplete()
 
-        reject(err.message)
+        return reject(err)
       }
 
       fetch(
         formatUrl(this.session.location, type, params),
-        { data }
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: (`r${++this.counter}`),
+            jsonrpc: '2.0',
+            method: 'call',
+            params: params,
+          }),
+          headers: {
+            "Content-type": "application/json",
+          },
+          credentials: 'omit',
+        }
       )
         .then((req) => req.json())
         .then(onSuccess)
@@ -148,36 +194,55 @@ export default class OdooClient {
     })
   }
 
-  login(values) {
+  login(values = {}) {
+    let needSave = false
+
+    if (values.login) {
+      this.session.login = values.login
+      needSave = true
+    }
+
+    if (values.password) {
+      this.session.password = values.password
+      needSave = true
+    }
+
+    if (values.location) {
+      this.session.location = values.location
+      needSave = true
+    }
+
+    if (values.db) {
+      this.session.db = values.db
+      needSave = true
+    }
+
+    if (needSave) {
+      this._saveSession()
+    }
+
     const params = {
-      login: values.login,
+      base_location: this.session.location,
+      db: this.session.db,
+      login: this.session.login,
       password: values.password,
-      base_location: values.location || this.session.location,
-      db: values.db || this.session.db,
     }
 
-    this.session = {
-      ...this.session,
-      ...params,
-    }
-
-    this._saveSession()
-
-    return this._sendRequest('login', params)
+    return this._request('login', params)
   }
 
-  logout(values) {
-    this.session = {
-      ...this.session,
-      sid: null
-    }
+  logout(values = {}) {
+    return this._request('logout').then(() => {
+      this.session = {
+        ...this.session,
+        sid: null
+      }
 
-    this._saveSession()
-
-    return this._sendRequest('logout');
+      this._saveSession()
+    });
   }
 
-  read(values) {
+  read(values = {}) {
     const params = {
       model: values.model,
       method: values.method || 'read',
@@ -195,15 +260,15 @@ export default class OdooClient {
       },
     }
 
-    return this._sendRequest(params.method, params)
+    return this._request(params.method, params)
   }
 
-  imageLocation(values) {
+  imageLocation(values = {}) {
     const params = [
       `session_id=${this.session.sid}`,
-      `model=${values.model}`,
-      `field=${values.field}`,
-      `id=${values.id}`,
+      `model=${values.model || ''}`,
+      `field=${values.field || ''}`,
+      `id=${values.id || ''}`,
     ]
 
     return `${this.session.location + URLS.IMAGE}?${params.join('&')}`

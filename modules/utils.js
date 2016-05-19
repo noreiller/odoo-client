@@ -1,5 +1,6 @@
 import { AND } from './operators'
 import * as URLS from './urls'
+import * as ERRORS from './errors'
 
 /**
  * Merge two filters arrays using an operator
@@ -43,4 +44,30 @@ export const formatUrl = (location, type, params = {}) => {
   }
 
   return url;
+}
+
+/**
+ * Process an error output with type and stack
+ * @param  {Object} data The OpenERP Server Error
+ * @return {Error}       The standard error
+ */
+export const processError = (data) => {
+  let err
+
+  if (data.debug && data.debug.indexOf('SessionExpiredException') !== -1) {
+    err = new Error(ERRORS.SESSION_EXPIRED)
+  }
+  else {
+    err = new Error(data.type)
+  }
+
+  err.stack = `${data.debug}${data.fault_code || ''}`
+
+  return err
+}
+
+export const warning = (condition, ...args) => {
+  if (condition) {
+    console.warn.apply(args)
+  }
 }
