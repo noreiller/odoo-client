@@ -5,7 +5,7 @@
   "private": true,
   "author": "Aurélien MANCA (https://www.amanca.fr/)",
   "license": "MIT",
-  "main": "modules/index.js",
+  "main": "lib/index.js",
   "dependencies": {
     "isomorphic-fetch": "^2.2.1"
   },
@@ -22,6 +22,7 @@
     "nodemon": "^1.9.2"
   },
   "scripts": {
+    "build": "babel ./modules -d ./lib",
     "test": "node -r dotenv/config -r babel-core/register ./node_modules/istanbul/lib/cli.js cover _mocha -- ./test",
     "pretest": "eslint modules test",
     "watch": "nodemon -x 'npm test' ./modules ./test"
