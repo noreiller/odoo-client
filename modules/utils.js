@@ -68,6 +68,6 @@ export const processError = (data) => {
 
 export const warning = (condition, ...args) => {
   if (condition) {
-    console.warn.apply(args)
+    console.warn.apply(null, args)
   }
 }

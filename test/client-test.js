@@ -44,7 +44,7 @@ describe('client', () => {
   describe('#imageLocation()', () => {
     it('should construct the image location of a model', () => {
       const session = {
-        sid: 'sid',
+        session_id: 'session_id',
         location: 'https://www.odoo.tld',
       }
       const client = new OdooClient(session)
@@ -54,24 +54,24 @@ describe('client', () => {
         id: 'id',
       }
 
-      expect(client.imageLocation(params)).toEqual(`${session.location + IMAGE}?session_id=${session.sid}&model=${params.model}&field=${params.field}&id=${params.id}`)
+      expect(client.imageLocation(params)).toEqual(`${session.location + IMAGE}?session_id=${session.session_id}&model=${params.model}&field=${params.field}&id=${params.id}`)
     })
 
     it('should return the image location even without info', () => {
       const session = {
-        sid: 'sid',
+        session_id: 'session_id',
         location: 'https://www.odoo.tld',
       }
       const client = new OdooClient(session)
       const params = {}
 
-      expect(client.imageLocation(params)).toEqual(`${session.location + IMAGE}?session_id=${session.sid}&model=&field=&id=`)
+      expect(client.imageLocation(params)).toEqual(`${session.location + IMAGE}?session_id=${session.session_id}&model=&field=&id=`)
     })
   })
 
   describe('#login()', () => {
     it('should login to the server', () => {
-      const params = {
+      const session = {
         location: ODOO_LOCATION,
         db: ODOO_DB,
         login: ODOO_LOGIN,
@@ -79,13 +79,31 @@ describe('client', () => {
       }
 
       const client = new OdooClient()
-      return client.login(params).then((response) => {
+      return client.login(session).then((response) => {
         expect(response.result.uid).toExist()
-      }).then(() => client.logout())
+      })
+    })
+
+    it('should autologin', (done) => {
+      const session = {
+        location: ODOO_LOCATION,
+        db: ODOO_DB,
+        login: ODOO_LOGIN,
+        password: ODOO_PASSWORD,
+        autologin: true,
+      }
+
+      const client = new OdooClient(session)
+      client.list({
+        model: 'res.users',
+      }).then((response) => {
+        expect(response.result.length).toExist()
+        done()
+      })
     })
 
     it('should catch a login error from the server', () => {
-      const params = {
+      const session = {
         location: ODOO_LOCATION,
         db: ODOO_DB,
         login: Date.now(),
@@ -93,7 +111,7 @@ describe('client', () => {
       }
 
       const client = new OdooClient()
-      return client.login(params).catch((err) => {
+      return client.login(session).catch((err) => {
         expect(err.message).toEqual(LOGIN_FAILED)
       })
     })
@@ -101,7 +119,7 @@ describe('client', () => {
 
   describe('#logout()', () => {
     it('should logout from the server', () => {
-      const params = {
+      const session = {
         location: ODOO_LOCATION,
         db: ODOO_DB,
         login: ODOO_LOGIN,
@@ -109,9 +127,63 @@ describe('client', () => {
       }
 
       const client = new OdooClient()
-      return client.login(params).then(() => {
-        client.logout(params).then((response) => {
+      return client.login(session).then(() => {
+        client.logout().then((response) => {
           expect(response.result).toNotExist
+        })
+      })
+    })
+  })
+
+  describe('#read()', () => {
+    it('should read a model', (done) => {
+      const session = {
+        location: ODOO_LOCATION,
+        db: ODOO_DB,
+        login: ODOO_LOGIN,
+        password: ODOO_PASSWORD,
+      }
+
+      const client = new OdooClient()
+      client.login(session).then(() => {
+        client.read({
+          model: 'res.users',
+          id: client.session.context.uid,
+        }).then((response) => {
+          expect(response.result.id).toEqual(client.session.context.uid)
+          done()
+        })
+      })
+    })
+
+    it('should read a model and gets its dependencies', (done) => {
+      const session = {
+        location: ODOO_LOCATION,
+        db: ODOO_DB,
+        login: ODOO_LOGIN,
+        password: ODOO_PASSWORD,
+        dbs: {
+          RES_USERS: {
+            name: 'res.users',
+            dependencies: [
+              {
+                key: 'partner_id',
+                db: 'res.partner',
+              }
+            ]
+          }
+        }
+      }
+
+      const client = new OdooClient()
+      client.login(session).then(() => {
+        client.read({
+          model: 'res.users',
+          id: client.session.context.uid,
+          fields: ['id', 'name', 'partner_id']
+        }).then((response) => {
+          expect(response.dependencies['res.partner'][0].id).toEqual(response.result.partner_id[0])
+          done()
         })
       })
     })
