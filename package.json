@@ -10,9 +10,9 @@
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.8.0",
-    "babel-core": "^6.8.0",
-    "babel-plugin-add-module-exports": "^0.2.0",
+    "babel-cli": "^6.9.0",
+    "babel-core": "^6.9.0",
+    "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-es2015-node6": "^0.2.0",
     "babel-preset-stage-1": "^6.5.0",
     "dotenv": "^2.0.0",
