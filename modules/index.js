@@ -12,3 +12,7 @@ export {
 export const createClient = (values) => {
   return new OdooClient(values)
 }
+
+if (typeof window !== 'undefined') {
+  window.OdooClient = OdooClient
+}

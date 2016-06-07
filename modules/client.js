@@ -5,6 +5,7 @@ import * as URLS from './urls'
 import { formatUrl, processError, warning } from './utils'
 import { resolveDependencies } from './resolver'
 
+const isBrowser = typeof document !== 'undefined'
 let _counter = 0
 const _queue = []
 const _sessions = {}
@@ -40,7 +41,7 @@ export default class OdooClient {
     }
 
     warning(
-      values.password && typeof document !== 'undefined',
+      values.password && isBrowser,
       `You provided a "password", use with caution in the browser since it can be exposed. Prefer use it only on the server.`
     )
 
@@ -190,8 +191,20 @@ export default class OdooClient {
 
       const onError = (err) => {
         onComplete()
-
         reject(err)
+      }
+
+      let headers
+
+      if (isBrowser) {
+        headers = new Headers()
+        headers.append("Content-Type", "application/json")
+        headers.append("Cookie", `${this.session.sid};`)
+      }
+      else {
+        headers = {}
+        headers["Content-Type"] = "application/json"
+        headers["Cookie"] = `${this.session.sid};`
       }
 
       fetch(
@@ -204,19 +217,19 @@ export default class OdooClient {
             method: 'call',
             params,
           }),
-          headers: {
-            "Content-type": "application/json",
-            "Cookie": `${this.session.sid};`,
-          },
+          headers,
+          credentials: 'include',
         }
       )
         .then((req) => {
-          const sid = req.headers.get('set-cookie').split(';')[0]
+          if (req.headers.get('set-cookie')) {
+            const sid = req.headers.get('set-cookie').split(';')[0]
 
-          if (sid) {
-            this._saveSession({
-              sid
-            })
+            if (sid) {
+              this._saveSession({
+                sid
+              })
+            }
           }
 
           return req
@@ -228,7 +241,7 @@ export default class OdooClient {
   }
 
   /**
-   * @todo node.js version
+   * @todo server alternative
    */
   download(type, params) {
     const id = `id${Date.now()}`
@@ -423,7 +436,7 @@ export default class OdooClient {
     }
 
     const params = {
-      session_id: this.sesson.session_id,
+      session_id: this.session.session_id,
       token: new Date().getTime(),
       action: JSON.stringify({
         ...values,

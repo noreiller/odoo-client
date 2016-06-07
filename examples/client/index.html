@@ -1,0 +1,87 @@
+<doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Odoo Client</title>
+  </head>
+  <body>
+    <form method="POST">
+      <fieldset>
+        <legend>Odoo client</legend>
+        <p><em>Warning: this won't work if your Odoo instance does not allow CORS requests.</em></p>
+        <p>
+          <label>
+            <strong>Location</strong>
+            <input type="url" name="location" />
+          </label>
+        </p>
+        <p>
+          <label>
+            <strong>Database</strong>
+            <input type="text" name="db" />
+          </label>
+        </p>
+        <p>
+          <label>
+            <strong>Login</strong>
+            <input type="text" name="login" />
+          </label>
+        </p>
+        <p>
+          <label>
+            <strong>Password</strong>
+            <input type="password" name="pwd" />
+          </label>
+        </p>
+        <p>
+          <label>
+            <strong>Autologin</strong>
+            <input type="checkbox" name="autologin" value="true" />
+          </label>
+        </p>
+        <p>
+          <button type="submit">OK</button>
+        </p>
+      </fieldset>
+    </form>
+    <pre class="result"></pre>
+    <script src="../../dist/index.js"></script>
+    <script>
+      const log = (node, text) => {
+        node.appendChild(
+          document.createTextNode(`${text}\n\n`)
+        )
+      }
+
+      const onSubmit = (event) => {
+        event.preventDefault()
+        const values = {
+          location: event.currentTarget.querySelector('input[name="location"]').value,
+          db: event.currentTarget.querySelector('input[name="db"]').value,
+          login: event.currentTarget.querySelector('input[name="login"]').value,
+          password: event.currentTarget.querySelector('input[name="pwd"]').value,
+          autologin: !!event.currentTarget.querySelector('input[name="autologin"]').checked,
+        }
+
+        const resultNode = document.querySelector('.result')
+
+        while (resultNode.firstChild) {
+          resultNode.removeChild(resultNode.firstChild)
+        }
+
+        log(resultNode, JSON.stringify(values, '', 2))
+
+        const client = new OdooClient(values)
+        client.login({ password: values.password })
+          .then((response) => {
+            log(resultNode, JSON.stringify(response, '', 2))
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+      }
+
+      document.querySelector('form').addEventListener('submit', onSubmit)
+    </script>
+  </body>
+</html>

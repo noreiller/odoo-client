@@ -1,6 +1,6 @@
 {
   "name": "odoo-client",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Odoo client in JavaScript",
   "private": true,
   "author": "Aurélien MANCA (https://www.amanca.fr/)",
@@ -12,6 +12,7 @@
   "devDependencies": {
     "babel-cli": "^6.9.0",
     "babel-core": "^6.9.0",
+    "babel-loader": "^6.2.4",
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-es2015-node6": "^0.2.0",
     "babel-preset-stage-1": "^6.5.0",
@@ -19,12 +20,25 @@
     "eslint": "^2.10.2",
     "expect": "^1.20.1",
     "istanbul": "^1.0.0-alpha.2",
-    "nodemon": "^1.9.2"
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-mocha": "^1.0.1",
+    "karma-mocha-reporter": "^2.0.3",
+    "karma-webpack": "^1.7.0",
+    "nodemon": "^1.9.2",
+    "webpack": "^1.13.1"
   },
   "scripts": {
-    "build": "babel ./modules -d ./lib",
-    "test": "node -r dotenv/config -r babel-core/register ./node_modules/istanbul/lib/cli.js cover _mocha -- ./test",
-    "pretest": "eslint modules test",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "babel ./modules -d ./lib",
+    "build:client": "webpack lib/index.js dist/index.js",
+    "prebuild": "npm run lint",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "node -r dotenv/config -r babel-core/register ./node_modules/istanbul/lib/cli.js cover _mocha -- ./test/*-test.js",
+    "test:client": "node -r dotenv/config -r babel-core/register node_modules/.bin/karma start",
+    "pretest": "npm run lint",
+    "lint": "eslint modules test *.js",
     "watch": "nodemon -x 'npm test' ./modules ./test"
   }
 }

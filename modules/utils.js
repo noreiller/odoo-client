@@ -66,8 +66,13 @@ export const processError = (data) => {
   return err
 }
 
+/**
+ * Expose a warning if some condition is fulfilled
+ * @param  {Boolean} condition
+ * @param  {String(s)} ...args
+ */
 export const warning = (condition, ...args) => {
   if (condition) {
-    console.warn.apply(null, args)
+    console.warn(args[0] || '', args[1] || '', args[2] || '', args[3] || '')
   }
 }
