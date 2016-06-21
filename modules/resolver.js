@@ -2,21 +2,26 @@ import { IN } from './operators'
 import { formatFilters } from './utils'
 
 export const deepMerge = (target, newObjets) => {
-  for (let i in newObjets) {
-    const modelName = i
-    const models = newObjets[i]
+  for (let modelName in newObjets) {
+    const models = newObjets[modelName]
 
-    for (let j in models) {
-      const model = models[j]
-
+    models.forEach((model) => {
       if (!target[modelName]) {
         target[modelName] = []
       }
 
-      if (target[modelName].filter((targetModel) => targetModel.id === model.id).length === 0) {
+      const targetModels = target[modelName].filter((targetModel) => targetModel.id === model.id)
+
+      if (targetModels.length === 0) {
         target[modelName].push(model)
       }
-    }
+      else if (targetModels.length === 1) {
+        target[modelName][0] = {
+          ...target[modelName][0],
+          ...model,
+        }
+      }
+    })
   }
 
   return target
@@ -44,10 +49,19 @@ export const getDependencies = (db, models) => {
     }
 
     if (ids.length) {
-      dependencies.push({
-        model: deps[i].db,
-        ids,
+      const dependency = dependencies.filter((dep) => {
+        return dep.model === deps[i].db
       })
+
+      if (dependency.length) {
+        dependency[0].ids = dependency[0].ids.concat(ids)
+      }
+      else {
+        dependencies.push({
+          model: deps[i].db,
+          ids,
+        })
+      }
     }
   }
 
@@ -79,7 +93,10 @@ export const resolveDependencies = (client, response) => {
     let deps = []
     for (let i in client.session.dbs) {
       for (let name in response) {
-        if (client.session.dbs[i].name === name && checkDependencies(client.session.dbs[i], response[name])) {
+        if (
+          client.session.dbs[i].name === name
+          && checkDependencies(client.session.dbs[i], response[name])
+        ) {
           deps.push(getDependencies(client.session.dbs[i], response[name]))
         }
       }
@@ -109,13 +126,8 @@ export const resolveDependencies = (client, response) => {
         if (response[dep.model]) {
           let ids = dep.ids.filter((id) => {
             let search = response[dep.model].reduce((prev, current) => {
-              if (current.id === id) {
-                return current
-              }
-              else {
-                return prev
-              }
-            })
+              return current.id === id ? current : prev
+            }, {})
 
             return search.id !== id
           })
@@ -150,14 +162,16 @@ export const resolveDependencies = (client, response) => {
   })
 }
 
-export function resolvePromises (client, promises, responseCache = {}) {
+export const resolvePromises = (client, promises, responseCache = {}) => {
   return new Promise((resolve, reject) => {
     Promise.all(promises)
       .then((values) => {
         let response = {}
 
         values.forEach((value) => {
-          response[value.model] = value.result
+          if (value.model && value.result) {
+            response[value.model] = value.result
+          }
         })
 
         resolveDependencies(client, deepMerge(responseCache, response))
