@@ -177,12 +177,14 @@ export default class OdooClient {
           response.offset = params.offset
         }
 
+        const resultIsList = typeof response.result === 'object' && typeof response.length !== 'undefined'
         const responseWithModel = {
-          [params.model]: length ? response.result : [response.result]
+          [params.model]: resultIsList ? response.result : [response.result]
         }
 
         resolveDependencies(this, responseWithModel).then((dependencies) => {
           delete dependencies[params.model]
+
           response.dependencies = dependencies
 
           resolve(response)
