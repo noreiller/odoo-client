@@ -67,4 +67,5 @@ Then, you can run the tests with the `$ npm test` command.
 
 ## TODO
 
-* Finish tests
+* Use nock to test requests.
+* Finish tests.

@@ -66,13 +66,13 @@ describe('resolver', () => {
         dependencies: [
           {
             key: 'number_key',
-            db: 'res.partner',
+            model: 'res.partner',
           }, {
             key: 'array_key',
-            db: 'res.partner',
+            model: 'res.partner',
           }, {
             key: 'multiple_key',
-            db: 'res.partner',
+            model: 'res.partner',
             multiple: true,
           }
         ]
@@ -110,13 +110,13 @@ describe('resolver', () => {
         dependencies: [
           {
             key: 'number_key',
-            db: 'res.partner',
+            model: 'res.partner',
           }, {
             key: 'array_key',
-            db: 'res.partner',
+            model: 'res.partner',
           }, {
             key: 'multiple_key',
-            db: 'res.partner',
+            model: 'res.partner',
             multiple: true,
           }
         ]
@@ -170,13 +170,13 @@ describe('resolver', () => {
         login: ODOO_LOGIN,
         password: ODOO_PASSWORD,
         autologin: true,
-        dbs: {
+        dependencies: {
           RES_USERS: {
             name: 'res.users',
             dependencies: [
               {
                 key: 'partner_id',
-                db: 'res.partner',
+                model: 'res.partner',
               }
             ]
           }

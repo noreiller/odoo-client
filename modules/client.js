@@ -18,7 +18,7 @@ const _defaultSession = {
   session_id: null,
   context: {},
   autologin: false,
-  dbs: {},
+  dependencies: {},
 }
 
 export default class OdooClient {

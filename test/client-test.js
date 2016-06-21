@@ -162,13 +162,13 @@ describe('client', () => {
         db: ODOO_DB,
         login: ODOO_LOGIN,
         password: ODOO_PASSWORD,
-        dbs: {
+        dependencies: {
           RES_USERS: {
             name: 'res.users',
             dependencies: [
               {
                 key: 'partner_id',
-                db: 'res.partner',
+                model: 'res.partner',
               }
             ]
           }

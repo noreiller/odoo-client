@@ -27,8 +27,14 @@ export const deepMerge = (target, newObjets) => {
   return target
 }
 
-export const getDependencies = (db, models) => {
-  const deps = db.dependencies || []
+/**
+ * Get dependency list of a model among a list of models
+ * @param  {Object} obj     The object which has a dependencies key
+ * @param  {Array} models   The list of models to search in
+ * @return {Array}
+ */
+export const getDependencies = (obj, models) => {
+  const deps = obj.dependencies || []
   let dependencies = []
 
   for (let i in deps) {
@@ -50,7 +56,7 @@ export const getDependencies = (db, models) => {
 
     if (ids.length) {
       const dependency = dependencies.filter((dep) => {
-        return dep.model === deps[i].db
+        return dep.model === deps[i].model
       })
 
       if (dependency.length) {
@@ -58,7 +64,7 @@ export const getDependencies = (db, models) => {
       }
       else {
         dependencies.push({
-          model: deps[i].db,
+          model: deps[i].model,
           ids,
         })
       }
@@ -68,8 +74,8 @@ export const getDependencies = (db, models) => {
   return dependencies
 }
 
-export const checkDependencies = (db, models) => {
-  const deps = db.dependencies || []
+export const checkDependencies = (obj, models) => {
+  const deps = obj.dependencies || []
   let hasDependencies = false
 
   for (let i in deps) {
@@ -91,13 +97,13 @@ export const checkDependencies = (db, models) => {
 export const resolveDependencies = (client, response) => {
   return new Promise((resolve, reject) => {
     let deps = []
-    for (let i in client.session.dbs) {
+    for (let i in client.session.dependencies) {
       for (let name in response) {
         if (
-          client.session.dbs[i].name === name
-          && checkDependencies(client.session.dbs[i], response[name])
+          client.session.dependencies[i].name === name
+          && checkDependencies(client.session.dependencies[i], response[name])
         ) {
-          deps.push(getDependencies(client.session.dbs[i], response[name]))
+          deps.push(getDependencies(client.session.dependencies[i], response[name]))
         }
       }
     }
