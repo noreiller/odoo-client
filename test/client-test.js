@@ -11,7 +11,7 @@ const ODOO_PASSWORD = process.env.ODOO_PASSWORD
 
 describe('client', () => {
 
-  describe('#constructor()', () => {
+  describe('constructor()', () => {
     it('should return an instance of OdooClient', () => {
       expect(new OdooClient).toBeA(OdooClient)
     })
@@ -21,7 +21,7 @@ describe('client', () => {
     })
   })
 
-  describe('#_saveSession()', () => {
+  describe('_saveSession()', () => {
     it('should remove the password if no autologin', () => {
       const session = {
         password: 'password',
@@ -41,7 +41,7 @@ describe('client', () => {
     })
   })
 
-  describe('#imageLocation()', () => {
+  describe('imageLocation()', () => {
     it('should construct the image location of a model', () => {
       const session = {
         session_id: 'session_id',
@@ -69,7 +69,7 @@ describe('client', () => {
     })
   })
 
-  describe('#login()', () => {
+  describe('login()', () => {
     it('should login to the server', () => {
       const session = {
         location: ODOO_LOCATION,
@@ -117,7 +117,7 @@ describe('client', () => {
     })
   })
 
-  describe('#logout()', () => {
+  describe('logout()', () => {
     it('should logout from the server', () => {
       const session = {
         location: ODOO_LOCATION,
@@ -135,7 +135,7 @@ describe('client', () => {
     })
   })
 
-  describe('#read()', () => {
+  describe('read()', () => {
     it('should read a model', (done) => {
       const session = {
         location: ODOO_LOCATION,

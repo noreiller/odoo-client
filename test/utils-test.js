@@ -1,6 +1,6 @@
 import expect from 'expect'
 
-import { formatFilters, formatUrl, processError } from '../modules/utils'
+import { formatFilters, formatUrl, processError, warning } from '../modules/utils'
 import { AND, OR, EQUAL, NOT_EQUAL } from '../modules/operators'
 import { LIST, CALL } from '../modules/types'
 import * as URLS from '../modules/urls'
@@ -8,7 +8,7 @@ import * as ERRORS from '../modules/errors'
 
 describe('utils', () => {
 
-  describe('#formatFilters()', () => {
+  describe('formatFilters()', () => {
     it('should combine filters', () => {
       const first = [
         ['active', EQUAL, true],
@@ -52,7 +52,7 @@ describe('utils', () => {
     })
   })
 
-  describe('#formatUrl()', () => {
+  describe('formatUrl()', () => {
     it('should construct the url', () => {
       const location = 'https://www.odoo.tld'
       const params = {
@@ -79,7 +79,7 @@ describe('utils', () => {
     })
   })
 
-  describe('#processError()', () => {
+  describe('processError()', () => {
     it('should return an instance of Error', () => {
       const data = {
         debug: 'debug',
@@ -98,6 +98,15 @@ describe('utils', () => {
       expect(processError(data).stack).toEqual(`${data.debug}${data.fault_code}`)
     })
 
+    it('should concatenate the data to set the stack even with missing data', () => {
+      const data = {
+        debug: '',
+        fault_code: null,
+        type: 'type',
+      }
+      expect(processError(data).stack).toEqual(`${data.debug}`)
+    })
+
     it('should set the type as message of the error', () => {
       const data = {
         debug: 'debug',
@@ -114,6 +123,37 @@ describe('utils', () => {
         type: 'type',
       }
       expect(processError(data).message).toEqual(ERRORS.SESSION_EXPIRED)
+    })
+  })
+
+
+  describe('warning()', () => {
+    it('should not output a warning if the condition is not fulfilled', () => {
+      const spy = expect.spyOn(console, 'warn')
+
+      warning(false)
+
+      expect(spy).toNotHaveBeenCalled()
+      spy.restore()
+    })
+
+    it('should output a warning with concatenated strings', () => {
+      const spy = expect.spyOn(console, 'warn')
+      const args = ['a', 'bc', 'def', 'ghij']
+
+      warning(true, args[0], args[1], args[2], args[3])
+
+      expect(spy).toHaveBeenCalledWith(args[0], args[1], args[2], args[3])
+      spy.restore()
+    })
+
+    it('should output a warning with empty strings if no arguments', () => {
+      const spy = expect.spyOn(console, 'warn')
+
+      warning(true)
+
+      expect(spy).toHaveBeenCalledWith('', '', '', '')
+      spy.restore()
     })
   })
 
