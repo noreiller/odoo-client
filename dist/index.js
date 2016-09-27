@@ -131,7 +131,7 @@
 	  session_id: null,
 	  context: {},
 	  autologin: false,
-	  dbs: {}
+	  dependencies: {}
 	};
 
 	class OdooClient {
@@ -230,6 +230,11 @@
 	        let result;
 	        let length;
 	        if (body.result) {
+	          // new response:
+	          // list: { results[params.model] = body.result, length, offset }
+	          // object with id: { results[params.model] = [body.result] }
+	          // else: { result: body.result }
+
 	          // list
 	          if (body.result && typeof body.result.records !== 'undefined') {
 	            result = body.result.records;
@@ -274,12 +279,14 @@
 	          response.offset = params.offset;
 	        }
 
+	        const resultIsList = typeof response.result === 'object' && typeof response.length !== 'undefined';
 	        const responseWithModel = {
-	          [params.model]: length ? response.result : [response.result]
+	          [params.model]: resultIsList ? response.result : [response.result]
 	        };
 
 	        (0, _resolver.resolveDependencies)(this, responseWithModel).then(dependencies => {
 	          delete dependencies[params.model];
+
 	          response.dependencies = dependencies;
 
 	          resolve(response);
@@ -330,7 +337,7 @@
 	  }
 
 	  /**
-	   * @todo node.js version
+	   * @todo server alternative
 	   */
 	  download(type, params) {
 	    const id = `id${ Date.now() }`;
@@ -1155,6 +1162,11 @@
 	  return err;
 	};
 
+	/**
+	 * Expose a warning if some condition is fulfilled
+	 * @param  {Boolean} condition
+	 * @param  {String(s)} ...args
+	 */
 	const warning = exports.warning = function warning(condition) {
 	  if (condition) {
 	    console.warn((arguments.length <= 1 ? undefined : arguments[1]) || '', (arguments.length <= 2 ? undefined : arguments[2]) || '', (arguments.length <= 3 ? undefined : arguments[3]) || '', (arguments.length <= 4 ? undefined : arguments[4]) || '');
@@ -1170,36 +1182,44 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.resolveDependencies = exports.checkDependencies = exports.getDependencies = exports.deepMerge = undefined;
-	exports.resolvePromises = resolvePromises;
+	exports.resolvePromises = exports.resolveDependencies = exports.checkDependencies = exports.getDependencies = exports.deepMerge = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var _operators = __webpack_require__(5);
 
 	var _utils = __webpack_require__(7);
 
 	const deepMerge = exports.deepMerge = (target, newObjets) => {
-	  for (let i in newObjets) {
-	    const modelName = i;
-	    const models = newObjets[i];
+	  for (let modelName in newObjets) {
+	    const models = newObjets[modelName];
 
-	    for (let j in models) {
-	      const model = models[j];
-
+	    models.forEach(model => {
 	      if (!target[modelName]) {
 	        target[modelName] = [];
 	      }
 
-	      if (target[modelName].filter(targetModel => targetModel.id === model.id).length === 0) {
+	      const targetModels = target[modelName].filter(targetModel => targetModel.id === model.id);
+
+	      if (targetModels.length === 0) {
 	        target[modelName].push(model);
+	      } else if (targetModels.length === 1) {
+	        target[modelName][0] = _extends({}, target[modelName][0], model);
 	      }
-	    }
+	    });
 	  }
 
 	  return target;
 	};
 
-	const getDependencies = exports.getDependencies = (db, models) => {
-	  const deps = db.dependencies || [];
+	/**
+	 * Get dependency list of a model among a list of models
+	 * @param  {Object} obj     The object which has a dependencies key
+	 * @param  {Array} models   The list of models to search in
+	 * @return {Array}
+	 */
+	const getDependencies = exports.getDependencies = (obj, models) => {
+	  const deps = obj.dependencies || [];
 	  let dependencies = [];
 
 	  for (let i in deps) {
@@ -1216,18 +1236,26 @@
 	    }
 
 	    if (ids.length) {
-	      dependencies.push({
-	        model: deps[i].db,
-	        ids
+	      const dependency = dependencies.filter(dep => {
+	        return dep.model === deps[i].model;
 	      });
+
+	      if (dependency.length) {
+	        dependency[0].ids = dependency[0].ids.concat(ids);
+	      } else {
+	        dependencies.push({
+	          model: deps[i].model,
+	          ids
+	        });
+	      }
 	    }
 	  }
 
 	  return dependencies;
 	};
 
-	const checkDependencies = exports.checkDependencies = (db, models) => {
-	  const deps = db.dependencies || [];
+	const checkDependencies = exports.checkDependencies = (obj, models) => {
+	  const deps = obj.dependencies || [];
 	  let hasDependencies = false;
 
 	  for (let i in deps) {
@@ -1249,10 +1277,10 @@
 	const resolveDependencies = exports.resolveDependencies = (client, response) => {
 	  return new Promise((resolve, reject) => {
 	    let deps = [];
-	    for (let i in client.session.dbs) {
+	    for (let i in client.session.dependencies) {
 	      for (let name in response) {
-	        if (client.session.dbs[i].name === name && checkDependencies(client.session.dbs[i], response[name])) {
-	          deps.push(getDependencies(client.session.dbs[i], response[name]));
+	        if (client.session.dependencies[i].name === name && checkDependencies(client.session.dependencies[i], response[name])) {
+	          deps.push(getDependencies(client.session.dependencies[i], response[name]));
 	        }
 	      }
 	    }
@@ -1280,12 +1308,8 @@
 	        if (response[dep.model]) {
 	          let ids = dep.ids.filter(id => {
 	            let search = response[dep.model].reduce((prev, current) => {
-	              if (current.id === id) {
-	                return current;
-	              } else {
-	                return prev;
-	              }
-	            });
+	              return current.id === id ? current : prev;
+	            }, {});
 
 	            return search.id !== id;
 	          });
@@ -1314,7 +1338,7 @@
 	  });
 	};
 
-	function resolvePromises(client, promises) {
+	const resolvePromises = exports.resolvePromises = function resolvePromises(client, promises) {
 	  let responseCache = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 	  return new Promise((resolve, reject) => {
@@ -1322,7 +1346,9 @@
 	      let response = {};
 
 	      values.forEach(value => {
-	        response[value.model] = value.result;
+	        if (value.model && value.result) {
+	          response[value.model] = value.result;
+	        }
 	      });
 
 	      resolveDependencies(client, deepMerge(responseCache, response)).then(responseWithDependencies => {
@@ -1332,7 +1358,7 @@
 	      reject(error);
 	    });
 	  });
-	}
+	};
 
 /***/ },
 /* 9 */
