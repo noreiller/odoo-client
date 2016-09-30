@@ -2,7 +2,6 @@
   "name": "odoo-client",
   "version": "0.3.0",
   "description": "Odoo client in JavaScript",
-  "private": true,
   "author": "Aurélien MANCA (https://www.amanca.fr/)",
   "license": "MIT",
   "main": "lib/index.js",
