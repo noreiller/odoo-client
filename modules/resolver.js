@@ -64,7 +64,7 @@ export const getDependencies = (obj, models) => {
       }
       else {
         dependencies.push({
-          model: deps[i].model,
+          ...deps[i],
           ids,
         })
       }
