@@ -230,11 +230,6 @@
 	        let result;
 	        let length;
 	        if (body.result) {
-	          // new response:
-	          // list: { results[params.model] = body.result, length, offset }
-	          // object with id: { results[params.model] = [body.result] }
-	          // else: { result: body.result }
-
 	          // list
 	          if (body.result && typeof body.result.records !== 'undefined') {
 	            result = body.result.records;
@@ -1243,10 +1238,9 @@
 	      if (dependency.length) {
 	        dependency[0].ids = dependency[0].ids.concat(ids);
 	      } else {
-	        dependencies.push({
-	          model: deps[i].model,
+	        dependencies.push(_extends({}, deps[i], {
 	          ids
-	        });
+	        }));
 	      }
 	    }
 	  }
