@@ -1,25 +1,43 @@
 import { IN } from './operators'
 import { formatFilters } from './utils'
 
-export const deepMerge = (target, newObjets) => {
-  for (let modelName in newObjets) {
-    const models = newObjets[modelName]
+export const removeDuplicatesFromList = (list) => {
+  return list.reduce((prev, next) => {
+    if (prev.indexOf(next) === -1) {
+      prev.push(next)
+    }
 
-    models.forEach((model) => {
+    return prev
+  }, [])
+}
+
+/**
+ * Merge collections of objects
+ * @param  {Object} target     An object which key is the model name, the value is an array
+ * @param  {Object} newObjects Same as target
+ * @return {Object}            Target updated
+ */
+export const deepMerge = (target, newObjects) => {
+  for (let modelName in newObjects) {
+    newObjects[modelName].forEach((newObject) => {
+      // Create the model list if it not exists
       if (!target[modelName]) {
         target[modelName] = []
       }
 
-      const targetModels = target[modelName].filter((targetModel) => targetModel.id === model.id)
+      // Find an existing ID
+      const existingTarget = target[modelName].find(
+        (targetModel) => targetModel.id === newObject.id
+      )
 
-      if (targetModels.length === 0) {
-        target[modelName].push(model)
-      }
-      else if (targetModels.length === 1) {
-        target[modelName][0] = {
-          ...target[modelName][0],
-          ...model,
+      if (existingTarget) {
+        target[modelName][target[modelName].indexOf(existingTarget)] = {
+          ...existingTarget,
+          ...newObject,
         }
+      }
+      else {
+        target[modelName].push(newObject)
       }
     })
   }
@@ -37,36 +55,50 @@ export const getDependencies = (obj, models) => {
   const deps = obj.dependencies || []
   let dependencies = []
 
+  // For each dependency model
   for (let i in deps) {
     let ids = []
 
+    // We loop in each model collection
     for (let k in models) {
+      // If the dependency key is found, we get the id
       if (models[k][deps[i].key]) {
+        // If multiple, we merge the list of ids
         if (deps[i].multiple) {
           ids = ids.concat(models[k][deps[i].key])
         }
+        // Or we add the id to the list
         else {
-            ids.push(typeof models[k][deps[i].key] === 'number'
-            ? models[k][deps[i].key]
-            : models[k][deps[i].key][0]
+          ids.push(
+            typeof models[k][deps[i].key] === 'number'
+              ? models[k][deps[i].key]
+              : models[k][deps[i].key][0]
           )
         }
       }
     }
 
     if (ids.length) {
-      const dependency = dependencies.filter((dep) => {
-        return dep.model === deps[i].model
-      })
+      // We remove the duplicates
+      ids = removeDuplicatesFromList(ids)
 
-      if (dependency.length) {
-        dependency[0].ids = dependency[0].ids.concat(ids)
+      const dependency = dependencies.find((dep) => dep.model === deps[i].model)
+
+      // If the dependency already exists, we merge and remove the duplicates
+      if (dependency) {
+        dependency.ids = removeDuplicatesFromList(dependency.ids.concat(ids))
       }
+      // Or we add it
       else {
-        dependencies.push({
+        const obj = {
           ...deps[i],
           ids,
-        })
+        }
+
+        obj.key && delete obj.key
+        obj.multiple && delete obj.multiple
+
+        dependencies.push(obj)
       }
     }
   }

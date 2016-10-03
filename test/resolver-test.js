@@ -12,6 +12,19 @@ describe('resolver', () => {
 
   describe('deepMerge()', () => {
     it('should merge objects', () => {
+      const target = {
+        'res.users': [
+          {
+            id: 1,
+            customProperty: 'customPropertyValue',
+          },
+          {
+            id: 2,
+            name: 'oldName',
+          }
+        ]
+      }
+
       const models = {
         'res.users': [
           {
@@ -29,14 +42,6 @@ describe('resolver', () => {
           }
         ]
       }
-      const target = {
-        'res.users': [
-          {
-            id: 1,
-            customProperty: 'customPropertyValue',
-          }
-        ]
-      }
 
       const expected = {
         ...models
@@ -45,6 +50,11 @@ describe('resolver', () => {
       expected['res.users'][0] = {
         ...expected['res.users'][0],
         ...target['res.users'][0],
+      }
+
+      expected['res.users'][1] = {
+        ...expected['res.users'][1],
+        ...target['res.users'][1],
       }
 
       expect(deepMerge(target, models)).toEqual(models)
@@ -110,13 +120,13 @@ describe('resolver', () => {
         dependencies: [
           {
             key: 'number_key',
-            model: 'res.partner',
+            model: 'db1',
           }, {
             key: 'array_key',
-            model: 'res.partner',
+            model: 'db2',
           }, {
             key: 'multiple_key',
-            model: 'res.partner',
+            model: 'db3',
             multiple: true,
           }
         ]
@@ -125,23 +135,33 @@ describe('resolver', () => {
         'res.users': [
           {
             id: 1,
-            name: 'test-user',
+            name: 'test-1',
             number_key: 1,
           }, {
             id: 2,
-            name: 'test-user',
+            name: 'test-2',
             array_key: [2, 'test user'],
           }, {
             id: 3,
-            name: 'test-user',
+            name: 'test-3',
             multiple_key: [3, 4],
+          }, {
+            id: 4,
+            name: 'test-1bis',
+            number_key: 1,
           }
         ]
       }
       const expected = [
         {
-          model: 'res.partner',
-          ids: [1, 2, 3, 4]
+          ids: [1],
+          model: 'db1',
+        }, {
+          ids: [2],
+          model: 'db2',
+        }, {
+          ids: [3, 4],
+          model: 'db3',
         }
       ]
 
