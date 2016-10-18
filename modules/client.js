@@ -456,7 +456,7 @@ export default class OdooClient {
       }),
     }
 
-    this._download('report', params)
+    return this._download('report', params)
   }
 
   custom(values = {}, options = {}) {

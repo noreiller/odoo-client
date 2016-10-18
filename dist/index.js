@@ -533,7 +533,7 @@
 	      }))
 	    };
 
-	    this._download('report', params);
+	    return this._download('report', params);
 	  }
 
 	  custom() {
