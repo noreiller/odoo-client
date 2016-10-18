@@ -337,6 +337,7 @@
 	  _download(type, params) {
 	    if (isBrowser) {
 	      const id = `id${ Date.now() }`;
+	      const url = (0, _utils.formatUrl)(this.session.location, type);
 
 	      // IFRAME
 	      const iframe = document.createElement("iframe");
@@ -367,7 +368,7 @@
 	      // @see https://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
 	      const form = document.createElement('form');
 	      form.setAttribute('method', params.method || 'post');
-	      form.setAttribute('action', _makeUrl(type));
+	      form.setAttribute('action', url);
 	      form.setAttribute('target', id);
 	      form.setAttribute('hidden', 'hidden');
 
