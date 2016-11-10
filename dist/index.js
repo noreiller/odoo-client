@@ -49,7 +49,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.createClient = exports.TYPES = exports.OPERATORS = exports.OdooClient = undefined;
+	exports.createClient = exports.URLS = exports.TYPES = exports.OPERATORS = exports.OdooClient = undefined;
 
 	var _client = __webpack_require__(1);
 
@@ -74,6 +74,7 @@
 	exports.OdooClient = _client2.default;
 	exports.OPERATORS = OPERATORS;
 	exports.TYPES = TYPES;
+	exports.URLS = URLS;
 	const createClient = exports.createClient = values => {
 	  return new _client2.default(values);
 	};

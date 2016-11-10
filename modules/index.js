@@ -7,6 +7,7 @@ export {
   OdooClient,
   OPERATORS,
   TYPES,
+  URLS,
 }
 
 export const createClient = (values) => {
