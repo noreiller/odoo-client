@@ -76,3 +76,19 @@ export const warning = (condition, ...args) => {
     console.warn(args[0] || '', args[1] || '', args[2] || '', args[3] || '')
   }
 }
+
+/**
+ * Retrieve a cookie in the document cookie string
+ * @param  {String} cookies The document.cookie
+ * @param  {String} name    The name of the cookie to find
+ * @return {String}         The value of the cookie
+ */
+export const getCookie = (cookies, name) => {
+  const cookie = cookies.split(';')
+    .map((cookie) => cookie.replace(/^\s*/, ''))
+    .find((cookie) => cookie.indexOf(name) === 0)
+
+  if (cookie) {
+    return cookie.split('=')[1]
+  }
+}

@@ -2,7 +2,7 @@ import fetch from 'isomorphic-fetch'
 import * as ERRORS from './errors'
 import * as OPERATORS from './operators'
 import * as URLS from './urls'
-import { formatUrl, processError, warning } from './utils'
+import { formatUrl, processError, warning, getCookie } from './utils'
 import { resolveDependencies } from './resolver'
 
 const isBrowser = typeof document !== 'undefined'
@@ -248,60 +248,87 @@ export default class OdooClient {
   _download(type, params) {
     return new Promise((resolve, reject) => {
       if (isBrowser) {
+        // We use the method of Odoo to check that the iframe has been loaded: a cookie will be set
+        // with the value of the token parameter we set in the form.
+        // The form targets an iframe, so no new page will be opened to trigger the download.
+
         const id = `id${Date.now()}`
         const url = formatUrl(this.session.location, type)
+        const { method, ...paramsToSend } = params
+
+        paramsToSend.token = id
+
+        // COOKIE CATCHER
+        const cookieName = 'fileToken'
+        const tick = () => {
+          const cookie = getCookie(document.cookie, cookieName)
+
+          if (cookie === id) {
+            document.cookie = `${cookieName}=;expires=${new Date().toGMTString()};path=/`
+
+            document.body.removeChild(iframe);
+            document.body.removeChild(form);
+
+            resolve({
+              result: true
+            })
+          }
+          else {
+            requestAnimationFrame(tick)
+          }
+        }
 
         // IFRAME
         const iframe = document.createElement("iframe")
         iframe.setAttribute('id', id)
         iframe.setAttribute('name', id)
         iframe.setAttribute('hidden', 'hidden')
-        document.body.appendChild(iframe)
 
         function iframeLoadListener() {
+          // Should occur only with a response error
           try {
-            var statusText
+            var statusText;
 
             if (!this.contentDocument.body.childNodes[1]) {
-              statusText = this.contentDocument.body.childNodes
+              statusText = this.contentDocument.body.childNodes;
+            } else {
+              statusText = JSON.parse(this.contentDocument.body.childNodes[1].textContent).message;
             }
-            else {
-              statusText = JSON.parse(this.contentDocument.body.childNodes[1].textContent).message
-            }
-          }
-          finally {
-            iframe.removeEventListener('load', iframeLoadListener)
-            document.body.removeChild(iframe)
-            document.body.removeChild(form)
+          } finally {
+            iframe.removeEventListener('load', iframeLoadListener);
+            document.body.removeChild(iframe);
+            document.body.removeChild(form);
+
+            reject(new Error(statusText))
           }
         }
 
-        iframe.addEventListener('load', iframeLoadListener, false)
+        iframe.addEventListener('load', iframeLoadListener, false);
+
+        document.body.appendChild(iframe)
 
         // FORM
-        // @see https://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
         const form = document.createElement('form')
         form.setAttribute('method', params.method || 'post')
         form.setAttribute('action', url)
         form.setAttribute('target', id)
         form.setAttribute('hidden', 'hidden')
 
-        for (let key in params) {
+        Object.keys(paramsToSend).forEach((key) => {
           const hiddenField = document.createElement('input')
 
           hiddenField.setAttribute('type', 'hidden')
           hiddenField.setAttribute('name', key)
-          hiddenField.setAttribute('value', params[key])
+          hiddenField.setAttribute('value', paramsToSend[key])
 
           form.appendChild(hiddenField)
-        }
+        })
 
         document.body.appendChild(form)
-        form.submit()
 
-        resolve({
-          result: true
-        })
+        // SUBMIT AND WAIT
+        form.submit()
+        requestAnimationFrame(tick)
       }
       else {
         reject(new Error('Download for Node.js is not yet implemented'))

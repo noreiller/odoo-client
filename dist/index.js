@@ -119,6 +119,8 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
 	const isBrowser = typeof document !== 'undefined';
 	let _counter = 0;
 	const _queue = [];
@@ -338,17 +340,45 @@
 	  _download(type, params) {
 	    return new Promise((resolve, reject) => {
 	      if (isBrowser) {
+	        // We use the method of Odoo to check that the iframe has been loaded: a cookie will be set
+	        // with the value of the token parameter we set in the form.
+	        // The form targets an iframe, so no new page will be opened to trigger the download.
+
 	        const id = `id${ Date.now() }`;
 	        const url = (0, _utils.formatUrl)(this.session.location, type);
+	        const method = params.method;
+
+	        const paramsToSend = _objectWithoutProperties(params, ['method']);
+
+	        paramsToSend.token = id;
+
+	        // COOKIE CATCHER
+	        const cookieName = 'fileToken';
+	        const tick = () => {
+	          const cookie = (0, _utils.getCookie)(document.cookie, cookieName);
+
+	          if (cookie === id) {
+	            document.cookie = `${ cookieName }=;expires=${ new Date().toGMTString() };path=/`;
+
+	            document.body.removeChild(iframe);
+	            document.body.removeChild(form);
+
+	            resolve({
+	              result: true
+	            });
+	          } else {
+	            requestAnimationFrame(tick);
+	          }
+	        };
 
 	        // IFRAME
 	        const iframe = document.createElement("iframe");
 	        iframe.setAttribute('id', id);
 	        iframe.setAttribute('name', id);
 	        iframe.setAttribute('hidden', 'hidden');
-	        document.body.appendChild(iframe);
 
 	        function iframeLoadListener() {
+	          // Should occur only with a response error
 	          try {
 	            var statusText;
 
@@ -361,35 +391,37 @@
 	            iframe.removeEventListener('load', iframeLoadListener);
 	            document.body.removeChild(iframe);
 	            document.body.removeChild(form);
+
+	            reject(new Error(statusText));
 	          }
 	        }
 
 	        iframe.addEventListener('load', iframeLoadListener, false);
 
+	        document.body.appendChild(iframe);
+
 	        // FORM
-	        // @see https://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
 	        const form = document.createElement('form');
 	        form.setAttribute('method', params.method || 'post');
 	        form.setAttribute('action', url);
 	        form.setAttribute('target', id);
 	        form.setAttribute('hidden', 'hidden');
 
-	        for (let key in params) {
+	        Object.keys(paramsToSend).forEach(key => {
 	          const hiddenField = document.createElement('input');
 
 	          hiddenField.setAttribute('type', 'hidden');
 	          hiddenField.setAttribute('name', key);
-	          hiddenField.setAttribute('value', params[key]);
+	          hiddenField.setAttribute('value', paramsToSend[key]);
 
 	          form.appendChild(hiddenField);
-	        }
+	        });
 
 	        document.body.appendChild(form);
-	        form.submit();
 
-	        resolve({
-	          result: true
-	        });
+	        // SUBMIT AND WAIT
+	        form.submit();
+	        requestAnimationFrame(tick);
 	      } else {
 	        reject(new Error('Download for Node.js is not yet implemented'));
 	      }
@@ -1084,7 +1116,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.warning = exports.processError = exports.formatUrl = exports.formatFilters = undefined;
+	exports.getCookie = exports.warning = exports.processError = exports.formatUrl = exports.formatFilters = undefined;
 
 	var _operators = __webpack_require__(5);
 
@@ -1175,6 +1207,20 @@
 	const warning = exports.warning = function warning(condition) {
 	  if (condition) {
 	    console.warn((arguments.length <= 1 ? undefined : arguments[1]) || '', (arguments.length <= 2 ? undefined : arguments[2]) || '', (arguments.length <= 3 ? undefined : arguments[3]) || '', (arguments.length <= 4 ? undefined : arguments[4]) || '');
+	  }
+	};
+
+	/**
+	 * Retrieve a cookie in the document cookie string
+	 * @param  {String} cookies The document.cookie
+	 * @param  {String} name    The name of the cookie to find
+	 * @return {String}         The value of the cookie
+	 */
+	const getCookie = exports.getCookie = (cookies, name) => {
+	  const cookie = cookies.split(';').map(cookie => cookie.replace(/^\s*/, '')).find(cookie => cookie.indexOf(name) === 0);
+
+	  if (cookie) {
+	    return cookie.split('=')[1];
 	  }
 	};
 
