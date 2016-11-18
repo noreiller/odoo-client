@@ -260,22 +260,35 @@ export default class OdooClient {
 
         // COOKIE CATCHER
         const cookieName = 'fileToken'
-        const tick = () => {
-          const cookie = getCookie(document.cookie, cookieName)
-
-          if (cookie === id) {
-            document.cookie = `${cookieName}=;expires=${new Date().toGMTString()};path=/`
-
-            document.body.removeChild(iframe);
-            document.body.removeChild(form);
-
-            resolve({
-              result: true
-            })
+        const delay = 1500
+        let start = null
+        const tick = (timestamp) => {
+          if (!start) {
+            start = timestamp
           }
-          else {
+
+          const progress = timestamp - start
+          if (progress < delay) {
             requestAnimationFrame(tick)
           }
+          else {
+            const cookie = getCookie(document.cookie, cookieName)
+
+            if (cookie === id) {
+              document.cookie = `${cookieName}=;expires=${new Date().toGMTString()};path=/`
+
+              document.body.removeChild(iframe);
+              document.body.removeChild(form);
+
+              resolve({
+                result: true
+              })
+            }
+            else {
+              requestAnimationFrame(tick)
+            }
+          }
+
         }
 
         // IFRAME
