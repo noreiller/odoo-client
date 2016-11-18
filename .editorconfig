@@ -1,0 +1,10 @@
+# editorconfig.org
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+
+[*.{yml,css}]
+indent_style = space
+indent_size = 4
