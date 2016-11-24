@@ -49,7 +49,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.createClient = exports.URLS = exports.TYPES = exports.OPERATORS = exports.OdooClient = undefined;
+	exports.createClient = exports.formatFilters = exports.URLS = exports.TYPES = exports.OPERATORS = exports.OdooClient = undefined;
 
 	var _client = __webpack_require__(1);
 
@@ -67,6 +67,8 @@
 
 	var URLS = _interopRequireWildcard(_urls);
 
+	var _utils = __webpack_require__(7);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -75,6 +77,7 @@
 	exports.OPERATORS = OPERATORS;
 	exports.TYPES = TYPES;
 	exports.URLS = URLS;
+	exports.formatFilters = _utils.formatFilters;
 	const createClient = exports.createClient = values => {
 	  return new _client2.default(values);
 	};
