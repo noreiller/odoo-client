@@ -1,6 +1,6 @@
 {
   "name": "odoo-client",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Odoo client in JavaScript",
   "author": "Aurélien MANCA (https://www.amanca.fr/)",
   "license": "MIT",
