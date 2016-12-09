@@ -286,7 +286,10 @@
 	        };
 
 	        (0, _resolver.resolveDependencies)(this, responseWithModel).then(dependencies => {
-	          delete dependencies[params.model];
+	          // If the request is a READ one, exclude the model from the dependencies.
+	          if (type === 'read') {
+	            dependencies[params.model] = dependencies[params.model].filter(obj => obj.id !== response.result.id);
+	          }
 
 	          response.dependencies = dependencies;
 

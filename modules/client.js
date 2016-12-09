@@ -182,13 +182,19 @@ export default class OdooClient {
           [params.model]: resultIsList ? response.result : [response.result]
         }
 
-        resolveDependencies(this, responseWithModel).then((dependencies) => {
-          delete dependencies[params.model]
+        resolveDependencies(this, responseWithModel)
+          .then((dependencies) => {
+            // If the request is a READ one, exclude the model from the dependencies.
+            if (type === 'read') {
+              dependencies[params.model] = dependencies[params.model].filter(
+                (obj) => obj.id !== response.result.id
+              )
+            }
 
-          response.dependencies = dependencies
+            response.dependencies = dependencies
 
-          resolve(response)
-        })
+            resolve(response)
+          })
       }
 
       const onError = (err) => {
