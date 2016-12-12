@@ -78,7 +78,7 @@
 	exports.TYPES = TYPES;
 	exports.URLS = URLS;
 	exports.formatFilters = _utils.formatFilters;
-	const createClient = exports.createClient = values => {
+	var createClient = exports.createClient = function createClient(values) {
 	  return new _client2.default(values);
 	};
 
@@ -96,7 +96,11 @@
 	  value: true
 	});
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _isomorphicFetch = __webpack_require__(2);
 
@@ -124,11 +128,15 @@
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	const isBrowser = typeof document !== 'undefined';
-	let _counter = 0;
-	const _queue = [];
-	const _sessions = {};
-	const _defaultSession = {
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var isBrowser = typeof document !== 'undefined';
+	var _counter = 0;
+	var _queue = [];
+	var _sessions = {};
+	var _defaultSession = {
 	  location: null,
 	  db: null,
 	  login: null,
@@ -140,11 +148,13 @@
 	  dependencies: {}
 	};
 
-	class OdooClient {
-	  constructor() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	var OdooClient = function () {
+	  function OdooClient() {
+	    var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	    this.instanceId = `s_${ ++_counter }_${ Date.now() }`;
+	    _classCallCheck(this, OdooClient);
+
+	    this.instanceId = 's_' + ++_counter + '_' + Date.now();
 	    this.counter = 0;
 	    this.session = {};
 
@@ -153,464 +163,496 @@
 	    return this;
 	  }
 
-	  _saveSession(session) {
-	    const values = _extends({}, session);
+	  _createClass(OdooClient, [{
+	    key: '_saveSession',
+	    value: function _saveSession(session) {
+	      var values = _extends({}, session);
 
-	    (0, _utils.warning)(values.password && isBrowser, `You provided a "password", use with caution in the browser since it can be exposed. Prefer use it only on the server.`);
+	      (0, _utils.warning)(values.password && isBrowser, 'You provided a "password", use with caution in the browser since it can be exposed. Prefer use it only on the server.');
 
-	    (0, _utils.warning)(values.autologin && !values.password, `"autologin" is enabled but you didn't provide a "password", so any autologin request will fail.`);
+	      (0, _utils.warning)(values.autologin && !values.password, '"autologin" is enabled but you didn\'t provide a "password", so any autologin request will fail.');
 
-	    if (!values.autologin && values.password) {
-	      values.password = _defaultSession.password;
+	      if (!values.autologin && values.password) {
+	        values.password = _defaultSession.password;
+	      }
+
+	      this.session = _extends({}, this.session, values);
+
+	      _sessions[this.instanceId] = _extends({}, this.session);
 	    }
+	  }, {
+	    key: '_request',
+	    value: function _request() {
+	      var _this = this;
 
-	    this.session = _extends({}, this.session, values);
-
-	    _sessions[this.instanceId] = _extends({}, this.session);
-	  }
-
-	  _request() {
-	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-
-	    return new Promise((resolve, reject) => {
-	      const callback = () => {
-	        this._performRequest.apply(this, args).then(resolve).catch(reject);
-	      };
-
-	      if (args[0] !== 'login' && !this.session.session_id && this.session.autologin && this.session.password) {
-	        this.login().then(callback).catch(reject);
-	      } else {
-	        callback.apply(this);
-	      }
-	    });
-	  }
-
-	  _performRequest(type) {
-	    let data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-	    let options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-	    const params = _extends({}, data);
-
-	    return new Promise((resolve, reject) => {
-	      if (this.session.session_id) {
-	        params.session_id = this.session.session_id;
+	      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
 	      }
 
-	      // If this request has already been performed, cancel it.
-	      if (_queue.indexOf(JSON.stringify(params)) !== -1) {
-	        reject(new Error(ERRORS.PENDING_REQUEST));
-	      }
-	      // Or add it to the queue.
-	      else {
-	          _queue.push(JSON.stringify(params));
-	        }
+	      return new Promise(function (resolve, reject) {
+	        var callback = function callback() {
+	          _this._performRequest.apply(_this, args).then(resolve).catch(reject);
+	        };
 
-	      const onComplete = () => {
-	        _queue.splice(_queue.indexOf(JSON.stringify(params)), 1);
-	      };
-
-	      const onSuccess = body => {
-	        onComplete();
-
-	        // Handle error
-	        if (body.error) {
-	          return reject((0, _utils.processError)(body.error.data));
-	        } else if (body.result && body.result.uid === false) {
-	          return reject(new Error(ERRORS.LOGIN_FAILED));
-	        }
-
-	        // User infos
-	        if (body.result && body.result.session_id) {
-	          this._saveSession({
-	            session_id: body.result.session_id,
-	            context: body.result.user_context
-	          });
-	        } else if (body.result && body.result.user_context) {
-	          this._saveSession({
-	            context: body.result.user_context
-	          });
-	        }
-
-	        let result;
-	        let length;
-	        if (body.result) {
-	          // list
-	          if (body.result && typeof body.result.records !== 'undefined') {
-	            result = body.result.records;
-	            length = body.result.length;
-	          } else {
-	            result = typeof body.result[0] !== 'undefined' ? body.result[0] : body.result;
-
-	            // single
-	            if (result.value) {
-	              result = result.value;
-	            }
-
-	            // boolean
-	            if (typeof result === 'boolean') {
-	              result = {
-	                value: result
-	              };
-	            }
-
-	            if (typeof options.fill !== 'undefined') {
-	              options.fill.forEach(field => {
-	                if (!result[field.name]) {
-	                  result[field.name] = field.value;
-	                }
-	              });
-	            }
-	          }
+	        if (args[0] !== 'login' && !_this.session.session_id && _this.session.autologin && _this.session.password) {
+	          _this.login().then(callback).catch(reject);
 	        } else {
-	          result = body.result;
+	          callback.apply(_this);
+	        }
+	      });
+	    }
+	  }, {
+	    key: '_performRequest',
+	    value: function _performRequest(type) {
+	      var _this2 = this;
+
+	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+	      var params = _extends({}, data);
+
+	      return new Promise(function (resolve, reject) {
+	        if (_this2.session.session_id) {
+	          params.session_id = _this2.session.session_id;
 	        }
 
-	        const response = {
-	          result,
-	          model: params.model
-	        };
-
-	        if (length && !options.avoidPager) {
-	          response.length = length;
+	        // If this request has already been performed, cancel it.
+	        if (_queue.indexOf(JSON.stringify(params)) !== -1) {
+	          reject(new Error(ERRORS.PENDING_REQUEST));
 	        }
-
-	        if (params.offset && !options.avoidPager) {
-	          response.offset = params.offset;
-	        }
-
-	        const resultIsList = typeof response.result === 'object' && typeof response.length !== 'undefined';
-	        const responseWithModel = {
-	          [params.model]: resultIsList ? response.result : [response.result]
-	        };
-
-	        (0, _resolver.resolveDependencies)(this, responseWithModel).then(dependencies => {
-	          // If the request is a READ one, exclude the model from the dependencies.
-	          if (type === 'read') {
-	            dependencies[params.model] = dependencies[params.model].filter(obj => obj.id !== response.result.id);
+	        // Or add it to the queue.
+	        else {
+	            _queue.push(JSON.stringify(params));
 	          }
 
-	          response.dependencies = dependencies;
+	        var onComplete = function onComplete() {
+	          _queue.splice(_queue.indexOf(JSON.stringify(params)), 1);
+	        };
 
-	          resolve(response);
-	        });
-	      };
+	        var onSuccess = function onSuccess(body) {
+	          onComplete();
 
-	      const onError = err => {
-	        onComplete();
-	        reject(err);
-	      };
+	          // Handle error
+	          if (body.error) {
+	            return reject((0, _utils.processError)(body.error.data));
+	          } else if (body.result && body.result.uid === false) {
+	            return reject(new Error(ERRORS.LOGIN_FAILED));
+	          }
 
-	      let headers;
-
-	      if (isBrowser) {
-	        headers = new Headers();
-	        headers.append("Content-Type", "application/json");
-	        headers.append("Cookie", `${ this.session.sid };`);
-	      } else {
-	        headers = {};
-	        headers["Content-Type"] = "application/json";
-	        headers["Cookie"] = `${ this.session.sid };`;
-	      }
-
-	      (0, _isomorphicFetch2.default)((0, _utils.formatUrl)(this.session.location, type, params), {
-	        method: "POST",
-	        body: JSON.stringify({
-	          id: `r${ ++this.counter }`,
-	          jsonrpc: '2.0',
-	          method: 'call',
-	          params
-	        }),
-	        headers,
-	        credentials: 'include'
-	      }).then(req => {
-	        if (req.headers.get('set-cookie')) {
-	          const sid = req.headers.get('set-cookie').split(';')[0];
-
-	          if (sid) {
-	            this._saveSession({
-	              sid
+	          // User infos
+	          if (body.result && body.result.session_id) {
+	            _this2._saveSession({
+	              session_id: body.result.session_id,
+	              context: body.result.user_context
+	            });
+	          } else if (body.result && body.result.user_context) {
+	            _this2._saveSession({
+	              context: body.result.user_context
 	            });
 	          }
-	        }
 
-	        return req;
-	      }).then(req => req.json()).then(onSuccess).catch(onError);
-	    });
-	  }
-
-	  /**
-	   * @todo server alternative
-	   */
-	  _download(type, params) {
-	    return new Promise((resolve, reject) => {
-	      if (isBrowser) {
-	        // We use the method of Odoo to check that the iframe has been loaded: a cookie will be set
-	        // with the value of the token parameter we set in the form.
-	        // The form targets an iframe, so no new page will be opened to trigger the download.
-
-	        const id = `id${ Date.now() }`;
-	        const url = (0, _utils.formatUrl)(this.session.location, type);
-	        const method = params.method;
-
-	        const paramsToSend = _objectWithoutProperties(params, ['method']);
-
-	        paramsToSend.token = id;
-
-	        // COOKIE CATCHER
-	        const cookieName = 'fileToken';
-	        const delay = 1500;
-	        let start = null;
-	        const tick = timestamp => {
-	          if (!start) {
-	            start = timestamp;
-	          }
-
-	          const progress = timestamp - start;
-	          if (progress < delay) {
-	            requestAnimationFrame(tick);
-	          } else {
-	            const cookie = (0, _utils.getCookie)(document.cookie, cookieName);
-
-	            if (cookie === id) {
-	              document.cookie = `${ cookieName }=;expires=${ new Date().toGMTString() };path=/`;
-
-	              document.body.removeChild(iframe);
-	              document.body.removeChild(form);
-
-	              resolve({
-	                result: true
-	              });
+	          var result = void 0;
+	          var length = void 0;
+	          if (body.result) {
+	            // list
+	            if (body.result && typeof body.result.records !== 'undefined') {
+	              result = body.result.records;
+	              length = body.result.length;
 	            } else {
-	              requestAnimationFrame(tick);
+	              result = typeof body.result[0] !== 'undefined' ? body.result[0] : body.result;
+
+	              // single
+	              if (result.value) {
+	                result = result.value;
+	              }
+
+	              // boolean
+	              if (typeof result === 'boolean') {
+	                result = {
+	                  value: result
+	                };
+	              }
+
+	              if (typeof options.fill !== 'undefined') {
+	                options.fill.forEach(function (field) {
+	                  if (!result[field.name]) {
+	                    result[field.name] = field.value;
+	                  }
+	                });
+	              }
 	            }
+	          } else {
+	            result = body.result;
 	          }
+
+	          var response = {
+	            result: result,
+	            model: params.model
+	          };
+
+	          if (length && !options.avoidPager) {
+	            response.length = length;
+	          }
+
+	          if (params.offset && !options.avoidPager) {
+	            response.offset = params.offset;
+	          }
+
+	          var resultIsList = _typeof(response.result) === 'object' && typeof response.length !== 'undefined';
+	          var responseWithModel = _defineProperty({}, params.model, resultIsList ? response.result : [response.result]);
+
+	          (0, _resolver.resolveDependencies)(_this2, responseWithModel).then(function (dependencies) {
+	            // If the request is a READ one, exclude the model from the dependencies.
+	            if (type === 'read') {
+	              dependencies[params.model] = dependencies[params.model].filter(function (obj) {
+	                return obj.id !== response.result.id;
+	              });
+	            }
+
+	            response.dependencies = dependencies;
+
+	            resolve(response);
+	          });
 	        };
 
-	        // IFRAME
-	        const iframe = document.createElement("iframe");
-	        iframe.setAttribute('id', id);
-	        iframe.setAttribute('name', id);
-	        iframe.setAttribute('hidden', 'hidden');
+	        var onError = function onError(err) {
+	          onComplete();
+	          reject(err);
+	        };
 
-	        function iframeLoadListener() {
-	          // Should occur only with a response error
-	          try {
-	            var statusText;
+	        var headers = void 0;
 
-	            if (!this.contentDocument.body.childNodes[1]) {
-	              statusText = this.contentDocument.body.childNodes;
-	            } else {
-	              statusText = JSON.parse(this.contentDocument.body.childNodes[1].textContent).message;
-	            }
-	          } finally {
-	            iframe.removeEventListener('load', iframeLoadListener);
-	            document.body.removeChild(iframe);
-	            document.body.removeChild(form);
-
-	            reject(new Error(statusText));
-	          }
+	        if (isBrowser) {
+	          headers = new Headers();
+	          headers.append("Content-Type", "application/json");
+	          headers.append("Cookie", _this2.session.sid + ';');
+	        } else {
+	          headers = {};
+	          headers["Content-Type"] = "application/json";
+	          headers["Cookie"] = _this2.session.sid + ';';
 	        }
 
-	        iframe.addEventListener('load', iframeLoadListener, false);
+	        (0, _isomorphicFetch2.default)((0, _utils.formatUrl)(_this2.session.location, type, params), {
+	          method: "POST",
+	          body: JSON.stringify({
+	            id: 'r' + ++_this2.counter,
+	            jsonrpc: '2.0',
+	            method: 'call',
+	            params: params
+	          }),
+	          headers: headers,
+	          credentials: 'include'
+	        }).then(function (req) {
+	          if (req.headers.get('set-cookie')) {
+	            var sid = req.headers.get('set-cookie').split(';')[0];
 
-	        document.body.appendChild(iframe);
+	            if (sid) {
+	              _this2._saveSession({
+	                sid: sid
+	              });
+	            }
+	          }
 
-	        // FORM
-	        const form = document.createElement('form');
-	        form.setAttribute('method', params.method || 'post');
-	        form.setAttribute('action', url);
-	        form.setAttribute('target', id);
-	        form.setAttribute('hidden', 'hidden');
+	          return req;
+	        }).then(function (req) {
+	          return req.json();
+	        }).then(onSuccess).catch(onError);
+	      });
+	    }
 
-	        Object.keys(paramsToSend).forEach(key => {
-	          const hiddenField = document.createElement('input');
+	    /**
+	     * @todo server alternative
+	     */
 
-	          hiddenField.setAttribute('type', 'hidden');
-	          hiddenField.setAttribute('name', key);
-	          hiddenField.setAttribute('value', paramsToSend[key]);
+	  }, {
+	    key: '_download',
+	    value: function _download(type, params) {
+	      var _this3 = this;
 
-	          form.appendChild(hiddenField);
+	      return new Promise(function (resolve, reject) {
+	        if (isBrowser) {
+	          (function () {
+	            var iframeLoadListener = function iframeLoadListener() {
+	              // Should occur only with a response error
+	              try {
+	                var statusText;
+
+	                if (!this.contentDocument.body.childNodes[1]) {
+	                  statusText = this.contentDocument.body.childNodes;
+	                } else {
+	                  statusText = JSON.parse(this.contentDocument.body.childNodes[1].textContent).message;
+	                }
+	              } finally {
+	                iframe.removeEventListener('load', iframeLoadListener);
+	                document.body.removeChild(iframe);
+	                document.body.removeChild(form);
+
+	                reject(new Error(statusText));
+	              }
+	            };
+
+	            // We use the method of Odoo to check that the iframe has been loaded: a cookie will be set
+	            // with the value of the token parameter we set in the form.
+	            // The form targets an iframe, so no new page will be opened to trigger the download.
+
+	            var id = 'id' + Date.now();
+	            var url = (0, _utils.formatUrl)(_this3.session.location, type);
+
+	            var method = params.method,
+	                paramsToSend = _objectWithoutProperties(params, ['method']);
+
+	            paramsToSend.token = id;
+
+	            // COOKIE CATCHER
+	            var cookieName = 'fileToken';
+	            var delay = 1500;
+	            var start = null;
+	            var tick = function tick(timestamp) {
+	              if (!start) {
+	                start = timestamp;
+	              }
+
+	              var progress = timestamp - start;
+	              if (progress < delay) {
+	                requestAnimationFrame(tick);
+	              } else {
+	                var cookie = (0, _utils.getCookie)(document.cookie, cookieName);
+
+	                if (cookie === id) {
+	                  document.cookie = cookieName + '=;expires=' + new Date().toGMTString() + ';path=/';
+
+	                  document.body.removeChild(iframe);
+	                  document.body.removeChild(form);
+
+	                  resolve({
+	                    result: true
+	                  });
+	                } else {
+	                  requestAnimationFrame(tick);
+	                }
+	              }
+	            };
+
+	            // IFRAME
+	            var iframe = document.createElement("iframe");
+	            iframe.setAttribute('id', id);
+	            iframe.setAttribute('name', id);
+	            iframe.setAttribute('hidden', 'hidden');
+
+	            iframe.addEventListener('load', iframeLoadListener, false);
+
+	            document.body.appendChild(iframe);
+
+	            // FORM
+	            var form = document.createElement('form');
+	            form.setAttribute('method', params.method || 'post');
+	            form.setAttribute('action', url);
+	            form.setAttribute('target', id);
+	            form.setAttribute('hidden', 'hidden');
+
+	            Object.keys(paramsToSend).forEach(function (key) {
+	              var hiddenField = document.createElement('input');
+
+	              hiddenField.setAttribute('type', 'hidden');
+	              hiddenField.setAttribute('name', key);
+	              hiddenField.setAttribute('value', paramsToSend[key]);
+
+	              form.appendChild(hiddenField);
+	            });
+
+	            document.body.appendChild(form);
+
+	            // SUBMIT AND WAIT
+	            form.submit();
+	            requestAnimationFrame(tick);
+	          })();
+	        } else {
+	          reject(new Error('Download for Node.js is not yet implemented'));
+	        }
+	      });
+	    }
+	  }, {
+	    key: 'login',
+	    value: function login() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      this._saveSession(values);
+
+	      var params = {
+	        base_location: this.session.location,
+	        db: this.session.db,
+	        login: this.session.login,
+	        password: this.session.autologin ? this.session.password : values.password
+	      };
+
+	      return this._request('login', params);
+	    }
+	  }, {
+	    key: 'logout',
+	    value: function logout() {
+	      var _this4 = this;
+
+	      return this._request('logout').then(function () {
+	        _this4._saveSession({
+	          session_id: null,
+	          sid: null
 	        });
+	      });
+	    }
+	  }, {
+	    key: 'list',
+	    value: function list() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	        document.body.appendChild(form);
+	      var params = {
+	        model: values.model,
+	        fields: values.fields || ['id', 'name'],
+	        domain: values.filters || [],
+	        sort: values.sort || '',
+	        limit: values.limit || false,
+	        offset: values.offset || 0,
+	        context: _extends({}, this.session.context, values.context)
+	      };
 
-	        // SUBMIT AND WAIT
-	        form.submit();
-	        requestAnimationFrame(tick);
-	      } else {
-	        reject(new Error('Download for Node.js is not yet implemented'));
+	      var options = {
+	        avoidPager: values.avoidPager || false
+	      };
+
+	      return this._request('list', params, options);
+	    }
+	  }, {
+	    key: 'read',
+	    value: function read() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      var params = {
+	        model: values.model,
+	        method: values.method || 'read',
+	        args: [values.id ? [Number(values.id)] : [], values.fields || ['id', 'name']],
+	        kwargs: {
+	          context: _extends({}, this.session.context, values.context)
+	        },
+	        context: _extends({}, this.session.context, values.context)
+	      };
+
+	      return this._request(params.method, params);
+	    }
+	  }, {
+	    key: 'save',
+	    value: function save() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      var options = {
+	        fill: []
+	      };
+
+	      var params = {
+	        model: values.model,
+	        method: values.method || (values.id ? 'write' : 'create'),
+	        args: [],
+	        kwargs: {
+	          context: _extends({}, this.session.context, values.context)
+	        },
+	        context: _extends({}, this.session.context, values.context)
+	      };
+
+	      if (values.id) {
+	        params.args.push([Number(values.id)]);
+
+	        // /!\ WARNING /!\
+	        // If the ID is sent, so we send it back.
+	        options.fill.push({
+	          name: 'id',
+	          value: values.id
+	        });
 	      }
-	    });
-	  }
 
-	  login() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	      params.args.push(values.data || {});
 
-	    this._saveSession(values);
+	      return this._request(params.method, params, options);
+	    }
+	  }, {
+	    key: 'button',
+	    value: function button() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	    const params = {
-	      base_location: this.session.location,
-	      db: this.session.db,
-	      login: this.session.login,
-	      password: this.session.autologin ? this.session.password : values.password
-	    };
+	      var params = {
+	        args: [],
+	        domain_id: null
+	      };
 
-	    return this._request('login', params);
-	  }
+	      if (values.method) {
+	        params.method = values.method;
+	      } else if (values.type) {
+	        params.type = values.type;
+	      }
 
-	  logout() {
-	    return this._request('logout').then(() => {
-	      this._saveSession({
-	        session_id: null,
-	        sid: null
+	      if (values.model) {
+	        params.model = values.model;
+	      }
+
+	      if (values.id) {
+	        params.args.push([Number(values.id)]);
+	      }
+
+	      params.context_id = params.args.length - 1;
+
+	      return this._request('button', params);
+	    }
+	  }, {
+	    key: 'report',
+	    value: function report() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      var context = _extends({}, this.session.context, {
+	        active_model: values.datas && values.datas.model,
+	        active_id: values.datas && values.datas.ids && values.datas.ids[0],
+	        active_ids: [values.datas && values.datas.ids && values.datas.ids[0]],
+	        type: values.datas && values.datas.form && values.datas.form.type
 	      });
-	    });
-	  }
 
-	  list() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	      var params = {
+	        session_id: this.session.session_id,
+	        token: new Date().getTime(),
+	        action: JSON.stringify(_extends({}, values, {
+	          context: context
+	        }))
+	      };
 
-	    const params = {
-	      model: values.model,
-	      fields: values.fields || ['id', 'name'],
-	      domain: values.filters || [],
-	      sort: values.sort || '',
-	      limit: values.limit || false,
-	      offset: values.offset || 0,
-	      context: _extends({}, this.session.context, values.context)
-	    };
+	      return this._download('report', params);
+	    }
+	  }, {
+	    key: 'custom',
+	    value: function custom() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-	    const options = {
-	      avoidPager: values.avoidPager || false
-	    };
-
-	    return this._request('list', params, options);
-	  }
-
-	  read() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	    const params = {
-	      model: values.model,
-	      method: values.method || 'read',
-	      args: [values.id ? [Number(values.id)] : [], values.fields || ['id', 'name']],
-	      kwargs: {
+	      var params = {
+	        model: values.model,
+	        method: values.method,
+	        args: values.data ? [values.data] : [],
+	        kwargs: {
+	          context: _extends({}, this.session.context, values.context)
+	        },
 	        context: _extends({}, this.session.context, values.context)
-	      },
-	      context: _extends({}, this.session.context, values.context)
-	    };
+	      };
 
-	    return this._request(params.method, params);
-	  }
-
-	  save() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	    const options = {
-	      fill: []
-	    };
-
-	    const params = {
-	      model: values.model,
-	      method: values.method || (values.id ? 'write' : 'create'),
-	      args: [],
-	      kwargs: {
-	        context: _extends({}, this.session.context, values.context)
-	      },
-	      context: _extends({}, this.session.context, values.context)
-	    };
-
-	    if (values.id) {
-	      params.args.push([Number(values.id)]);
-
-	      // /!\ WARNING /!\
-	      // If the ID is sent, so we send it back.
-	      options.fill.push({
-	        name: 'id',
-	        value: values.id
-	      });
+	      return this._request(params.method, params, options);
 	    }
+	  }, {
+	    key: 'imageLocation',
+	    value: function imageLocation() {
+	      var values = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	    params.args.push(values.data || {});
+	      var params = ['session_id=' + this.session.session_id, 'model=' + (values.model || ''), 'field=' + (values.field || ''), 'id=' + (values.id || '')];
 
-	    return this._request(params.method, params, options);
-	  }
-
-	  button() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	    const params = {
-	      args: [],
-	      domain_id: null
-	    };
-
-	    if (values.method) {
-	      params.method = values.method;
-	    } else if (values.type) {
-	      params.type = values.type;
+	      return this.session.location + URLS.IMAGE + '?' + params.join('&');
 	    }
+	  }]);
 
-	    if (values.model) {
-	      params.model = values.model;
-	    }
+	  return OdooClient;
+	}();
 
-	    if (values.id) {
-	      params.args.push([Number(values.id)]);
-	    }
-
-	    params.context_id = params.args.length - 1;
-
-	    return this._request('button', params);
-	  }
-
-	  report() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	    const context = _extends({}, this.session.context, {
-	      active_model: values.datas && values.datas.model,
-	      active_id: values.datas && values.datas.ids && values.datas.ids[0],
-	      active_ids: [values.datas && values.datas.ids && values.datas.ids[0]],
-	      type: values.datas && values.datas.form && values.datas.form.type
-	    });
-
-	    const params = {
-	      session_id: this.session.session_id,
-	      token: new Date().getTime(),
-	      action: JSON.stringify(_extends({}, values, {
-	        context
-	      }))
-	    };
-
-	    return this._download('report', params);
-	  }
-
-	  custom() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-	    let options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-	    const params = {
-	      model: values.model,
-	      method: values.method,
-	      args: values.data ? [values.data] : [],
-	      kwargs: {
-	        context: _extends({}, this.session.context, values.context)
-	      },
-	      context: _extends({}, this.session.context, values.context)
-	    };
-
-	    return this._request(params.method, params, options);
-	  }
-
-	  imageLocation() {
-	    let values = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	    const params = [`session_id=${ this.session.session_id }`, `model=${ values.model || '' }`, `field=${ values.field || '' }`, `id=${ values.id || '' }`];
-
-	    return `${ this.session.location + URLS.IMAGE }?${ params.join('&') }`;
-	  }
-	}
 	exports.default = OdooClient;
 	module.exports = exports['default'];
 
@@ -1074,9 +1116,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	const SESSION_EXPIRED = exports.SESSION_EXPIRED = 'SESSION_EXPIRED';
-	const PENDING_REQUEST = exports.PENDING_REQUEST = 'PENDING_REQUEST';
-	const LOGIN_FAILED = exports.LOGIN_FAILED = 'LOGIN_FAILED';
+	var SESSION_EXPIRED = exports.SESSION_EXPIRED = 'SESSION_EXPIRED';
+	var PENDING_REQUEST = exports.PENDING_REQUEST = 'PENDING_REQUEST';
+	var LOGIN_FAILED = exports.LOGIN_FAILED = 'LOGIN_FAILED';
 
 /***/ },
 /* 5 */
@@ -1089,22 +1131,22 @@
 	});
 	// @TODO '=?', '=like', '=ilike'
 
-	const NOT = exports.NOT = '!';
-	const OR = exports.OR = '|';
-	const AND = exports.AND = '&';
-	const LIKE = exports.LIKE = 'like';
-	const ILIKE = exports.ILIKE = 'ilike';
-	const NOT_ILIKE = exports.NOT_ILIKE = 'not ilike';
-	const NOT_LIKE = exports.NOT_LIKE = 'not like';
-	const IN = exports.IN = 'in';
-	const NOT_IN = exports.NOT_IN = 'not in';
-	const CHILD_OF = exports.CHILD_OF = 'child_of';
-	const EQUAL = exports.EQUAL = '=';
-	const NOT_EQUAL = exports.NOT_EQUAL = '!=';
-	const GT = exports.GT = '>';
-	const GTE = exports.GTE = '>=';
-	const LT = exports.LT = '<';
-	const LTE = exports.LTE = '<=';
+	var NOT = exports.NOT = '!';
+	var OR = exports.OR = '|';
+	var AND = exports.AND = '&';
+	var LIKE = exports.LIKE = 'like';
+	var ILIKE = exports.ILIKE = 'ilike';
+	var NOT_ILIKE = exports.NOT_ILIKE = 'not ilike';
+	var NOT_LIKE = exports.NOT_LIKE = 'not like';
+	var IN = exports.IN = 'in';
+	var NOT_IN = exports.NOT_IN = 'not in';
+	var CHILD_OF = exports.CHILD_OF = 'child_of';
+	var EQUAL = exports.EQUAL = '=';
+	var NOT_EQUAL = exports.NOT_EQUAL = '!=';
+	var GT = exports.GT = '>';
+	var GTE = exports.GTE = '>=';
+	var LT = exports.LT = '<';
+	var LTE = exports.LTE = '<=';
 
 /***/ },
 /* 6 */
@@ -1115,14 +1157,14 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	const CALL = exports.CALL = '/web/dataset/call_kw';
-	const LIST = exports.LIST = '/web/dataset/search_read';
-	const BUTTON = exports.BUTTON = '/web/dataset/call_button';
-	const LOGIN = exports.LOGIN = '/web/session/authenticate';
-	const LOGOUT = exports.LOGOUT = '/web/session/destroy';
-	const REPORT = exports.REPORT = '/web/report';
-	const ACTION_LOAD = exports.ACTION_LOAD = '/web/action/load';
-	const IMAGE = exports.IMAGE = '/web/binary/image';
+	var CALL = exports.CALL = '/web/dataset/call_kw';
+	var LIST = exports.LIST = '/web/dataset/search_read';
+	var BUTTON = exports.BUTTON = '/web/dataset/call_button';
+	var LOGIN = exports.LOGIN = '/web/session/authenticate';
+	var LOGOUT = exports.LOGOUT = '/web/session/destroy';
+	var REPORT = exports.REPORT = '/web/report';
+	var ACTION_LOAD = exports.ACTION_LOAD = '/web/action/load';
+	var IMAGE = exports.IMAGE = '/web/binary/image';
 
 /***/ },
 /* 7 */
@@ -1154,15 +1196,15 @@
 	 * @param  {String} operator      =             AND
 	 * @return {Array}
 	 */
-	const formatFilters = exports.formatFilters = function formatFilters() {
-	  let currentFilters = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
-	  let newFilters = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-	  let operator = arguments.length <= 2 || arguments[2] === undefined ? _operators.AND : arguments[2];
+	var formatFilters = exports.formatFilters = function formatFilters() {
+	  var currentFilters = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	  var newFilters = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	  var operator = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _operators.AND;
 
-	  const mergedFilters = [];
-	  let count = 0;
+	  var mergedFilters = [];
+	  var count = 0;
 
-	  const checkFilter = (filter, idx) => {
+	  var checkFilter = function checkFilter(filter, idx) {
 	    if (typeof filter !== 'string') {
 	      mergedFilters.push(filter);
 	      count++;
@@ -1172,26 +1214,26 @@
 	  currentFilters.forEach(checkFilter);
 	  newFilters.forEach(checkFilter);
 
-	  for (let i = count; i > 1; i--) {
+	  for (var i = count; i > 1; i--) {
 	    mergedFilters.unshift(operator);
 	  }
 
 	  return mergedFilters;
 	};
 
-	const formatUrl = exports.formatUrl = function formatUrl(location, type) {
-	  let params = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+	var formatUrl = exports.formatUrl = function formatUrl(location, type) {
+	  var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-	  const query = URLS[type.toUpperCase()] || URLS.CALL;
+	  var query = URLS[type.toUpperCase()] || URLS.CALL;
 
-	  let url = location + query;
+	  var url = location + query;
 
 	  if (params.model) {
-	    url = `${ url }/${ params.model }:${ type }`;
+	    url = url + '/' + params.model + ':' + type;
 	  }
 
 	  if (params.method && type !== params.method) {
-	    url = `${ url }:${ params.method }`;
+	    url = url + ':' + params.method;
 	  }
 
 	  return url;
@@ -1202,8 +1244,8 @@
 	 * @param  {Object} data The OpenERP Server Error
 	 * @return {Error}       The standard error
 	 */
-	const processError = exports.processError = data => {
-	  let err;
+	var processError = exports.processError = function processError(data) {
+	  var err = void 0;
 
 	  if (data.debug && data.debug.indexOf('SessionExpiredException') !== -1) {
 	    err = new Error(ERRORS.SESSION_EXPIRED);
@@ -1211,7 +1253,7 @@
 	    err = new Error(data.type);
 	  }
 
-	  err.stack = `${ data.debug }${ data.fault_code || '' }`;
+	  err.stack = '' + data.debug + (data.fault_code || '');
 
 	  return err;
 	};
@@ -1221,7 +1263,7 @@
 	 * @param  {Boolean} condition
 	 * @param  {String(s)} ...args
 	 */
-	const warning = exports.warning = function warning(condition) {
+	var warning = exports.warning = function warning(condition) {
 	  if (condition) {
 	    console.warn((arguments.length <= 1 ? undefined : arguments[1]) || '', (arguments.length <= 2 ? undefined : arguments[2]) || '', (arguments.length <= 3 ? undefined : arguments[3]) || '', (arguments.length <= 4 ? undefined : arguments[4]) || '');
 	  }
@@ -1233,8 +1275,12 @@
 	 * @param  {String} name    The name of the cookie to find
 	 * @return {String}         The value of the cookie
 	 */
-	const getCookie = exports.getCookie = (cookies, name) => {
-	  const cookie = cookies.split(';').map(cookie => cookie.replace(/^\s*/, '')).find(cookie => cookie.indexOf(name) === 0);
+	var getCookie = exports.getCookie = function getCookie(cookies, name) {
+	  var cookie = cookies.split(';').map(function (cookie) {
+	    return cookie.replace(/^\s*/, '');
+	  }).find(function (cookie) {
+	    return cookie.indexOf(name) === 0;
+	  });
 
 	  if (cookie) {
 	    return cookie.split('=')[1];
@@ -1258,8 +1304,8 @@
 
 	var _utils = __webpack_require__(7);
 
-	const removeDuplicatesFromList = exports.removeDuplicatesFromList = list => {
-	  return list.reduce((prev, next) => {
+	var removeDuplicatesFromList = exports.removeDuplicatesFromList = function removeDuplicatesFromList(list) {
+	  return list.reduce(function (prev, next) {
 	    if (prev.indexOf(next) === -1) {
 	      prev.push(next);
 	    }
@@ -1274,16 +1320,18 @@
 	 * @param  {Object} newObjects Same as target
 	 * @return {Object}            Target updated
 	 */
-	const deepMerge = exports.deepMerge = (target, newObjects) => {
-	  for (let modelName in newObjects) {
-	    newObjects[modelName].forEach(newObject => {
+	var deepMerge = exports.deepMerge = function deepMerge(target, newObjects) {
+	  var _loop = function _loop(modelName) {
+	    newObjects[modelName].forEach(function (newObject) {
 	      // Create the model list if it not exists
 	      if (!target[modelName]) {
 	        target[modelName] = [];
 	      }
 
 	      // Find an existing ID
-	      const existingTarget = target[modelName].find(targetModel => targetModel.id === newObject.id);
+	      var existingTarget = target[modelName].find(function (targetModel) {
+	        return targetModel.id === newObject.id;
+	      });
 
 	      if (existingTarget) {
 	        target[modelName][target[modelName].indexOf(existingTarget)] = _extends({}, existingTarget, newObject);
@@ -1291,6 +1339,10 @@
 	        target[modelName].push(newObject);
 	      }
 	    });
+	  };
+
+	  for (var modelName in newObjects) {
+	    _loop(modelName);
 	  }
 
 	  return target;
@@ -1302,16 +1354,17 @@
 	 * @param  {Array} models   The list of models to search in
 	 * @return {Array}
 	 */
-	const getDependencies = exports.getDependencies = (obj, models) => {
-	  const deps = obj.dependencies || [];
-	  let dependencies = [];
+	var getDependencies = exports.getDependencies = function getDependencies(obj, models) {
+	  var deps = obj.dependencies || [];
+	  var dependencies = [];
 
 	  // For each dependency model
-	  for (let i in deps) {
-	    let ids = [];
+
+	  var _loop2 = function _loop2(i) {
+	    var ids = [];
 
 	    // We loop in each model collection
-	    for (let k in models) {
+	    for (var k in models) {
 	      // If the dependency key is found, we get the id
 	      if (models[k][deps[i].key]) {
 	        // If multiple, we merge the list of ids
@@ -1329,7 +1382,9 @@
 	      // We remove the duplicates
 	      ids = removeDuplicatesFromList(ids);
 
-	      const dependency = dependencies.find(dep => dep.model === deps[i].model);
+	      var dependency = dependencies.find(function (dep) {
+	        return dep.model === deps[i].model;
+	      });
 
 	      // If the dependency already exists, we merge and remove the duplicates
 	      if (dependency) {
@@ -1337,27 +1392,31 @@
 	      }
 	      // Or we add it
 	      else {
-	          const obj = _extends({}, deps[i], {
-	            ids
+	          var _obj = _extends({}, deps[i], {
+	            ids: ids
 	          });
 
-	          obj.key && delete obj.key;
-	          obj.multiple && delete obj.multiple;
+	          _obj.key && delete _obj.key;
+	          _obj.multiple && delete _obj.multiple;
 
-	          dependencies.push(obj);
+	          dependencies.push(_obj);
 	        }
 	    }
+	  };
+
+	  for (var i in deps) {
+	    _loop2(i);
 	  }
 
 	  return dependencies;
 	};
 
-	const checkDependencies = exports.checkDependencies = (obj, models) => {
-	  const deps = obj.dependencies || [];
-	  let hasDependencies = false;
+	var checkDependencies = exports.checkDependencies = function checkDependencies(obj, models) {
+	  var deps = obj.dependencies || [];
+	  var hasDependencies = false;
 
-	  for (let i in deps) {
-	    for (let k in models) {
+	  for (var i in deps) {
+	    for (var k in models) {
 	      if (models[k][deps[i].key]) {
 	        hasDependencies = true;
 	        break;
@@ -1372,87 +1431,99 @@
 	  return hasDependencies;
 	};
 
-	const resolveDependencies = exports.resolveDependencies = (client, response) => {
-	  return new Promise((resolve, reject) => {
-	    let deps = [];
-	    for (let i in client.session.dependencies) {
-	      for (let name in response) {
+	var resolveDependencies = exports.resolveDependencies = function resolveDependencies(client, response) {
+	  return new Promise(function (resolve, reject) {
+	    var deps = [];
+	    for (var i in client.session.dependencies) {
+	      for (var name in response) {
 	        if (client.session.dependencies[i].name === name && checkDependencies(client.session.dependencies[i], response[name])) {
 	          deps.push(getDependencies(client.session.dependencies[i], response[name]));
 	        }
 	      }
 	    }
 
-	    let mergedDeps = [];
+	    var mergedDeps = [];
 	    if (deps.length) {
-	      // De-duplicate dependencies from model name
-	      for (let i in deps) {
-	        for (let j in deps[i]) {
-	          let dep = deps[i][j];
-	          let deepSearch = mergedDeps.filter(mergedDep => mergedDep.model === dep.model);
-	          let idx = deepSearch.length ? mergedDeps.indexOf(deepSearch[0]) : -1;
+	      (function () {
+	        // De-duplicate dependencies from model name
+	        for (var _i in deps) {
+	          var _loop3 = function _loop3(j) {
+	            var dep = deps[_i][j];
+	            var deepSearch = mergedDeps.filter(function (mergedDep) {
+	              return mergedDep.model === dep.model;
+	            });
+	            var idx = deepSearch.length ? mergedDeps.indexOf(deepSearch[0]) : -1;
 
-	          if (idx === -1) {
-	            mergedDeps.push(dep);
-	          } else {
-	            mergedDeps[idx].ids = mergedDeps[idx].ids.concat(dep.ids);
+	            if (idx === -1) {
+	              mergedDeps.push(dep);
+	            } else {
+	              mergedDeps[idx].ids = mergedDeps[idx].ids.concat(dep.ids);
+	            }
+	          };
+
+	          for (var j in deps[_i]) {
+	            _loop3(j);
 	          }
 	        }
-	      }
 
-	      // De-duplicate dependencies from model ids and create promises
-	      let promises = [];
-	      mergedDeps.forEach(dep => {
-	        if (response[dep.model]) {
-	          let ids = dep.ids.filter(id => {
-	            let search = response[dep.model].reduce((prev, current) => {
-	              return current.id === id ? current : prev;
-	            }, {});
+	        // De-duplicate dependencies from model ids and create promises
+	        var promises = [];
+	        mergedDeps.forEach(function (dep) {
+	          if (response[dep.model]) {
+	            var _ids = dep.ids.filter(function (id) {
+	              var search = response[dep.model].reduce(function (prev, current) {
+	                return current.id === id ? current : prev;
+	              }, {});
 
-	            return search.id !== id;
+	              return search.id !== id;
+	            });
+
+	            dep.ids = _ids;
+	          }
+
+	          if (dep.ids.length) {
+	            dep.filters = (0, _utils.formatFilters)([], [["id", _operators.IN, dep.ids]]);
+	            delete dep.ids;
+
+	            promises.push(client.list(dep));
+	          }
+	        });
+
+	        if (promises.length) {
+	          resolvePromises(client, promises, response).then(function (responseWithDependencies) {
+	            resolve(deepMerge(response, responseWithDependencies));
+	          }).catch(function (error) {
+	            return reject(error);
 	          });
-
-	          dep.ids = ids;
+	        } else {
+	          resolve(response);
 	        }
-
-	        if (dep.ids.length) {
-	          dep.filters = (0, _utils.formatFilters)([], [["id", _operators.IN, dep.ids]]);
-	          delete dep.ids;
-
-	          promises.push(client.list(dep));
-	        }
-	      });
-
-	      if (promises.length) {
-	        resolvePromises(client, promises, response).then(responseWithDependencies => {
-	          resolve(deepMerge(response, responseWithDependencies));
-	        }).catch(error => reject(error));
-	      } else {
-	        resolve(response);
-	      }
+	      })();
 	    } else {
 	      resolve(response);
 	    }
 	  });
 	};
 
-	const resolvePromises = exports.resolvePromises = function resolvePromises(client, promises) {
-	  let responseCache = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+	var resolvePromises = exports.resolvePromises = function resolvePromises(client, promises) {
+	  var responseCache = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-	  return new Promise((resolve, reject) => {
-	    Promise.all(promises).then(values => {
-	      let response = {};
+	  return new Promise(function (resolve, reject) {
+	    Promise.all(promises).then(function (values) {
+	      var response = {};
 
-	      values.forEach(value => {
+	      values.forEach(function (value) {
 	        if (value.model && value.result) {
 	          response[value.model] = value.result;
 	        }
 	      });
 
-	      resolveDependencies(client, deepMerge(responseCache, response)).then(responseWithDependencies => {
+	      resolveDependencies(client, deepMerge(responseCache, response)).then(function (responseWithDependencies) {
 	        resolve(responseWithDependencies);
-	      }).catch(error => reject(error));
-	    }, error => {
+	      }).catch(function (error) {
+	        return reject(error);
+	      });
+	    }, function (error) {
 	      reject(error);
 	    });
 	  });
@@ -1467,14 +1538,14 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	const CALL = exports.CALL = 'CALL';
-	const LIST = exports.LIST = 'LIST';
-	const BUTTON = exports.BUTTON = 'BUTTON';
-	const LOGIN = exports.LOGIN = 'LOGIN';
-	const LOGOUT = exports.LOGOUT = 'LOGOUT';
-	const REPORT = exports.REPORT = 'REPORT';
-	const ACTION_LOAD = exports.ACTION_LOAD = 'ACTION_LOAD';
-	const IMAGE = exports.IMAGE = 'IMAGE';
+	var CALL = exports.CALL = 'CALL';
+	var LIST = exports.LIST = 'LIST';
+	var BUTTON = exports.BUTTON = 'BUTTON';
+	var LOGIN = exports.LOGIN = 'LOGIN';
+	var LOGOUT = exports.LOGOUT = 'LOGOUT';
+	var REPORT = exports.REPORT = 'REPORT';
+	var ACTION_LOAD = exports.ACTION_LOAD = 'ACTION_LOAD';
+	var IMAGE = exports.IMAGE = 'IMAGE';
 
 /***/ }
 /******/ ]);
